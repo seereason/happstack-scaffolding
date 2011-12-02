@@ -1,0 +1,179 @@
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, RecordWildCards, ScopedTypeVariables, TypeFamilies, TypeSynonymInstances #-}
+{-# OPTIONS_GHC -Wall -Wwarn -fno-warn-orphans #-}
+module Scaffolding.Auth
+       ( requiresRole
+       , doAuth
+       , doProfile
+       , doProfileData
+       ) where
+
+import Control.Applicative  ((<$>))
+import Data.Acid (AcidState)
+import Data.Acid.Advanced (query')
+import Data.Text (Text)
+import Happstack.Auth.Core.Auth (AuthState)
+import Happstack.Auth.Core.AuthURL (AuthURL(A_Login))
+import Happstack.Auth.Core.Profile (ProfileState)
+import Happstack.Auth.Core.ProfileURL (ProfileURL(P_PickProfile))
+import Happstack.Auth.Blaze.Templates   (handleAuth, handleProfile)
+import Happstack.Server (Happstack, Response, escape, ToMessage)
+import HJScript.Utils ()
+import HSP hiding (escape)
+import qualified HSX.XMLGenerator as HSX
+import Scaffolding.AppConf (HasAppConf(askAppConf), AppConf(facebook))
+import Scaffolding.MonadStack.Route (MonadRoute'(liftRoute, unRoute))
+import Scaffolding.Pages.AppTemplate (MonadRender, template)
+import Scaffolding.Pages.Unauthorized (unauthorizedPage)
+import qualified Scaffolding.ProfileData.Acid as ProfileData
+import qualified Scaffolding.ProfileData.Parts as ProfileData
+import qualified Scaffolding.ProfileData.URL as ProfileData
+import Scaffolding.ProfileData.User (MonadUser, MonadUserName, askAcidAuth, askAcidProfileData, lookMaybeUserId)
+import Scaffolding.ProfileData.URL (MkURL)
+import Text.Blaze (Html)
+import Text.Blaze.Renderer.String (renderHtml)
+import Web.Routes (MonadRoute(askRouteFn), RouteT(unRouteT), nestURL, showURL)
+import Web.Routes.Happstack (seeOtherURL)
+import Web.Routes.RouteT (URL, liftRouteT)
+import Web.Routes.XMLGenT (unUChild)
+
+doAuth :: forall m v weburl.
+          (URL (m weburl) ~ weburl,
+           URL (m AuthURL) ~ AuthURL,
+           HSX.XML (m weburl) ~ XML,
+           Happstack (m AuthURL),
+           MonadRoute (m AuthURL),
+           MonadRoute' weburl v (m weburl),
+           MonadRoute' AuthURL v (m AuthURL),
+           HasAppConf (m weburl),
+           MonadUserName (m weburl),
+           MonadRoute (m weburl),
+           MkURL weburl,
+           EmbedAsChild (m weburl) XML,
+           MonadRender (m weburl),
+           ToMessage (HSX.XML (m weburl)),
+           Happstack (m weburl),
+           EmbedAsAttr (m weburl) (Attr String weburl),
+           Monad v, Functor v) =>
+          Maybe Text -> AuthURL -> m weburl Response
+doAuth realm url =
+    do conf <- askAppConf
+       acidAuth <- askAcidAuth
+       onAuthURL <- showURL (ProfileData.profileURL P_PickProfile)
+       showFn <- askRouteFn
+       liftRoute' . nestURL ProfileData.authURL . unRoute $ (handleAuth acidAuth (urlTemplate' showFn) (facebook conf) realm onAuthURL url)
+    where
+      liftRoute' :: RouteT weburl v a -> m weburl a
+      liftRoute' = liftRoute
+      urlTemplate' :: (weburl -> [(Text, Maybe Text)] -> Text) -> String -> Html -> Html -> m AuthURL Response
+      urlTemplate' = urlTemplate
+
+-- | Instead of passing acidAuth etc we could just add AcidAuth etc to context.
+doProfile :: forall m v weburl.
+             (URL (m ProfileURL) ~ ProfileURL,
+              URL (m weburl) ~ weburl,
+              HSX.XML (m weburl) ~ XML,
+              Happstack (m ProfileURL),
+              MonadRoute (m ProfileURL),
+              EmbedAsChild (m weburl) XML,
+              EmbedAsAttr (m weburl) (Attr String weburl),
+              MonadRender (m weburl),
+              HasAppConf (m weburl),
+              ToMessage (HSX.XML (m weburl)),
+              MonadUser (m weburl), MkURL (URL (m weburl)),
+              Happstack (m weburl),
+              MonadRoute (m weburl),
+              MonadRoute' weburl v (m weburl),
+              MonadRoute' ProfileURL v (m ProfileURL),
+              Monad v, Functor v) =>
+             AcidState AuthState
+          -> AcidState ProfileState
+          -> ProfileURL
+          -> m weburl Response
+doProfile acidAuth acidProfile profileURL =
+    do postPickedURL <- showURL (ProfileData.mkURL ProfileData.CreateNew)
+       showFn <- askRouteFn
+       liftRoute' . nestURL ProfileData.profileURL . unRoute' $ handleProfile acidAuth acidProfile (urlTemplate showFn) postPickedURL profileURL
+    where
+      liftRoute' :: RouteT weburl v a -> m weburl a
+      liftRoute' = liftRoute
+      unRoute' :: m ProfileURL a -> RouteT ProfileURL v a
+      unRoute' = unRoute
+
+doProfileData :: (ProfileData.MkURL (URL m),
+                  MonadRender m,
+                  MonadUserName m,
+                  HasAppConf m,
+                  ToMessage (HSX.XML m),
+                  EmbedAsAttr m (Attr String (URL m)),
+                  MonadRoute m,
+                  Happstack m) =>
+                 AcidState AuthState
+              -> AcidState ProfileState
+              -> AcidState ProfileData.State
+              -> ProfileData.URL
+              -> m Response
+doProfileData _acidAuth _acidProfile _acidProfileData profileDataURL =
+    do postCreateURL <- showURL (ProfileData.mkURL ProfileData.Edit)
+       ProfileData.handle postCreateURL profileDataURL
+
+instance (Functor m, Monad m) => EmbedAsChild (RouteT url m) Html where
+    asChild html = asChild (CDATA False (renderHtml html))
+
+requiresRole :: (URL m ~ weburl,
+                 ProfileData.MkURL (URL m),
+                 MonadUserName m,
+                 MonadRender m,
+                 Happstack m,
+                 MonadRoute m,
+                 HasAppConf m,
+                 EmbedAsAttr m (Attr String weburl),
+                 ToMessage (HSX.XML m)) =>
+                ProfileData.Role -> weburl -> m weburl
+requiresRole role url =
+    do mu <- lookMaybeUserId
+       case mu of
+         Nothing -> escape $ seeOtherURL (ProfileData.authURL A_Login)
+         (Just uid) -> 
+             do apd <- askAcidProfileData
+                r <- query' apd (ProfileData.HasRole uid role)
+                if r
+                   then return url
+                   else escape $ unauthorizedPage "You do not have permission to view this page."
+
+urlTemplate :: forall headers body authurl weburl v m.
+               (EmbedAsChild (RouteT authurl v) headers,
+                EmbedAsChild (RouteT authurl v) body,
+                EmbedAsChild (m weburl) XML,
+                MonadRoute' weburl v (m weburl),
+                MonadRoute' authurl v (m authurl),
+                MonadRender (m weburl),
+                HasAppConf (m weburl),
+                ToMessage (HSX.XML (m weburl)),
+                MonadUser (m weburl),
+                Happstack (m weburl),
+                MonadRoute (m weburl),
+                EmbedAsAttr (m weburl) (Attr String weburl),
+                EmbedAsAttr (m weburl) (Attr String (URL (m weburl))),
+                Monad (m authurl),
+                Monad v,
+                Functor v) =>
+               (weburl -> [(Text, Maybe Text)] -> Text)
+            -> String
+            -> body
+            -> headers
+            -> m authurl Response
+urlTemplate showFn title headers body =
+    do headersXML <- liftRoute $ map unUChild <$> (unXMLGenT $ asChild headers :: RouteT authurl v [HSX.Child (RouteT authurl v)])
+       bodyXML    <- liftRoute $ map unUChild <$> (unXMLGenT $ asChild body    :: RouteT authurl v [HSX.Child (RouteT authurl v)])
+       liftRoute' $ unnest showFn $ unRoute $ template' title headersXML bodyXML
+    where
+      liftRoute' :: RouteT authurl v a -> m authurl a
+      liftRoute' = liftRoute
+      template' :: String -> [XML] -> [XML] -> m weburl Response
+      template' = template
+
+unnest :: (url1 -> [(Text, Maybe Text)] -> Text)
+       -> RouteT url1 m a 
+       -> RouteT url2 m a
+unnest showFn routeSP =
+    liftRouteT $ unRouteT routeSP showFn

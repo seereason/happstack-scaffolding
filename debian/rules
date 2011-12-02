@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+
+DEB_CABAL_PACKAGE = scaffolding
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/hlibrary.mk
+
+
+# How to install an extra file into the documentation package
+#binary-fixup/libghc-scaffolding-doc::
+#	echo "Some informative text" > debian/libghc-scaffolding-doc/usr/share/doc/libghc-scaffolding-doc/AnExtraDocFile

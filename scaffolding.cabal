@@ -1,0 +1,108 @@
+Name:             scaffolding
+Version:          0.16
+License:          AllRightsReserved
+Copyright:        (c) 2010-2011, SeeReason Partners LLC
+Author:           SeeReason Partners <partners@seereason.com>
+Maintainer:       SeeReason Partners <partners@seereason.com>
+Synopsis:         Scaffolding library derived from the seereason web application
+Description:      Modules pulled out of the seereason.com application for use as a template
+                  for creating new apps. 
+Build-Type:       Custom
+Category:         Web, Language
+Cabal-version:    >= 1.2
+
+Library
+ Hs-Source-Dirs:   src
+ GHC-options:      -Wall -Werror -O2
+ Build-Tools: trhsx
+ Exposed-Modules:  Scaffolding.AppConf
+                   Scaffolding.Auth
+                   Scaffolding.Comment.Acid
+                   Scaffolding.Comment.CommentPage
+                   Scaffolding.Comment.CommentSpamPage
+                   Scaffolding.Comment.SubmitComment
+                   Scaffolding.Comment.Types
+                   Scaffolding.Comment.URL
+                   Scaffolding.HJScriptExtra
+                   Scaffolding.HSP.Widget
+                   Scaffolding.Markdown
+                   Scaffolding.MonadStack.Acid
+                   Scaffolding.MonadStack.ExtraState
+                   Scaffolding.MonadStack.Headers
+                   Scaffolding.MonadStack.Route
+                   Scaffolding.MonadStack.ServerPart
+                   Scaffolding.Pages.AppTemplate
+                   Scaffolding.Pages.Common
+                   Scaffolding.Pages.FormPart
+                   Scaffolding.Pages.InternalServerError
+                   Scaffolding.Pages.Unauthorized
+                   Scaffolding.Pages.UnicodeKey
+                   Scaffolding.ProfileData.Acid
+                   Scaffolding.ProfileData.Markup
+                   Scaffolding.ProfileData.Pages
+                   Scaffolding.ProfileData.Parts
+                   Scaffolding.ProfileData.URL
+                   Scaffolding.ProfileData.User
+                   Scaffolding.Session
+                   Scaffolding.TimeExtra
+                   Scaffolding.Unicode.Render
+                   Scaffolding.Unicode.Utils
+                   Scaffolding.Unicode.Values
+ Build-Depends:    authenticate,
+                   acid-state >= 0.6,
+                   base,
+                   binary,
+                   blaze-html,
+                   bytestring,
+                   containers,
+                   digestive-functors,
+                   digestive-functors-happstack,
+                   digestive-functors-hsp,
+                   directory,
+                   fgl,
+                   filepath,
+                   happstack,
+                   happstack-authenticate >= 0.6,
+                   happstack-data >= 0.5,
+                   happstack-extra >= 0.87,
+                   happstack-hsp,
+                   happstack-search,
+                   ixset,
+                   happstack-server,
+                   happstack-util, 
+                   harp,
+                   HJavaScript,
+                   HJScript,
+                   hslogger,
+                   hsp,
+                   hsx >= 0.8,
+                   hsx-jmacro,
+                   html,
+                   jmacro,
+                   json,
+                   mtl,
+                   network,
+                   old-locale,
+                   parsec,
+                   pretty,
+                   process,
+                   QuickCheck >= 2,
+                   regex-compat,
+                   safecopy,
+                   set-extra,
+                   syb,
+                   syb-with-class,
+                   stm,
+                   template-haskell,
+                   text >= 0.11,
+                   time,
+                   unicode-names,
+                   unicode-properties,
+                   unix,
+                   Unixutils,
+                   utf8-string,
+                   web-routes >= 0.26.2,
+                   web-routes-th,
+                   web-routes-hsp,
+                   web-routes-happstack,
+                   xss-sanitize >= 0.3.0.1
