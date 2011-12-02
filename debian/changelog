@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.17) unstable; urgency=low
+
+  * Fix package name: scaffolding -> happstack-scaffolding
+
+ -- David Fox <dsf@seereason.com>  Fri, 02 Dec 2011 14:32:49 -0800
+
 haskell-scaffolding (0.16) unstable; urgency=low
 
   * Change title type in template from Maybe String to String

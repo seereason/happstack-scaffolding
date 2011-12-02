@@ -1,4 +1,4 @@
-Source: haskell-scaffolding
+Source: haskell-happstack-scaffolding
 Priority: extra
 Section: haskell
 Maintainer: David Fox <dsf@seereason.com>
@@ -153,7 +153,7 @@ Build-Depends-Indep: ghc-doc,
 Standards-Version: 3.9.1
 Homepage: http://hackage.haskell.org/package/scaffolding
 
-Package: libghc-scaffolding-dev
+Package: libghc-happstack-scaffolding-dev
 Architecture: any
 Depends: ${shlibs:Depends},
          ${haskell:Depends},
@@ -170,7 +170,7 @@ Description: Scaffolding library derived from the seereason web application
  .
  This package contains the normal library files.
 
-Package: libghc-scaffolding-prof
+Package: libghc-happstack-scaffolding-prof
 Architecture: any
 Depends: ${haskell:Depends},
          ${misc:Depends}
@@ -186,7 +186,7 @@ Description: Scaffolding library derived from the seereason web application
  .
  This package contains the libraries compiled with profiling enabled.
 
-# Package: libghc-scaffolding-doc
+# Package: libghc-happstack-scaffolding-doc
 # Architecture: all
 # Section: doc
 # Depends: ${haskell:Depends},
