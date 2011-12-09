@@ -3,8 +3,6 @@
 module Scaffolding.ProfileData.Pages
     ( editUserNamePage
     , editProfileDataPage
-    , userMarkup
-    , userLink
     , renderUser
     ) where
 
@@ -14,7 +12,6 @@ import Control.Monad.Trans (MonadIO)
 import Data.Acid.Advanced (query', update')
 import qualified Data.Set as Set
 import Data.Text                   (Text)
-import qualified Data.Text as T
 import Happstack.Auth.Core.Profile (UserId(..))
 import Happstack.Server
 import HSP
@@ -25,7 +22,7 @@ import Scaffolding.Pages.FormPart (FormDF, formPart, fieldset, li, ol, nullToNot
 import Scaffolding.Pages.InternalServerError (internalServerErrorPage)
 import qualified Scaffolding.ProfileData.Acid as ProfileData
 import Scaffolding.ProfileData.URL (MkURL(userURL))
-import Scaffolding.ProfileData.User (MonadUserName, askAcidProfileData, lookUser, lookUsername, userName, lookUsername')
+import Scaffolding.ProfileData.User (MonadUserName, askAcidProfileData, lookUser, lookUsername, lookUsername')
 import Scaffolding.Session (requireSession)
 import Text.Digestive              ((++>), (<++), transform)
 import Text.Digestive.Forms (FormInput)
@@ -103,19 +100,6 @@ editUserNameForm :: (FormInput i f, XMLGenerator x, Functor m, Monad m) =>
                     Maybe Text -> Form m i e [XMLGenT x (HSX.XML x)] Text
 editUserNameForm mUsername = 
     (label "your name: " ++> inputText mUsername) <* submit "change name"
-
-userMarkup :: (MonadRoute m, MonadUserName m, MkURL (URL m), MonadIO m, XMLGenerator x, EmbedAsAttr x (Attr String Text)) =>
-              UserId -> m (XMLGenT x (HSX.XML x))
-userMarkup u =
-    do name <- userName u
-       link <- userLink u
-       return $ <span><% link %>:<% either show T.unpack name %></span>
-
-userLink :: (MonadUserName m, MkURL (URL m), MonadRoute m, XMLGenerator x, EmbedAsAttr x (Attr String Text)) =>
-            UserId -> m (XMLGenT x (HSX.XML x))
-userLink u =
-    do url <- showURL (userURL u)
-       return <a href=url>U<% show (unUserId u) %></a>
 
 renderUser :: forall m.
               (Happstack m,

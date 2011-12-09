@@ -1,3 +1,11 @@
+haskell-happstack-scaffolding (0.18) unstable; urgency=low
+
+  * Make the signatures of userMarkup and userLink more sane.
+  * Remove second copy of those functions from Scaffolding.ProfileData.Pages,
+    leave the ones in Scaffolding.User.Markup.
+
+ -- David Fox <dsf@seereason.com>  Fri, 09 Dec 2011 15:06:37 -0800
+
 haskell-happstack-scaffolding (0.17) unstable; urgency=low
 
   * Fix package name: scaffolding -> happstack-scaffolding
