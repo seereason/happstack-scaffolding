@@ -21,7 +21,7 @@ import Happstack.Auth.Core.Profile   (UserId(..))
 import Happstack.Server.HSP.HTML ()
 import Happstack.Server.SURI ({- instance ToSURI Text -})
 import HJScript.Utils ()
-import HSP (XML, XMLGenT, XMLGenerator, unXMLGenT, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement, genEElement, SetAttr, AppendChild)
+import HSP (XML, GenXML, XMLGenerator, unXMLGenT, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement, genEElement)
 import HSP.Google.Analytics(analytics)
 import qualified HSX.XMLGenerator as HSX
 import Language.HJavaScript.Syntax (Block)
@@ -35,19 +35,13 @@ import Web.Routes.XMLGenT ()
 
 class (Functor x,
        MonadHeaders IO x,
-       -- MonadOntology FormulaPF (HeadersT IO) x,
        EmbedAsChild x (Block ()),
-       EmbedAsChild x String,
        EmbedAsChild x T.Text,
        EmbedAsChild x XML,
-       EmbedAsChild x (HSX.XML x),
-       -- EmbedAsChild x TextHtml,
        EmbedAsChild x (),
        EmbedAsAttr x (Attr String T.Text),
        EmbedAsAttr x (Attr String Id),
-       SetAttr x XML,
-       AppendChild x XML,
-       HSX.XMLGenerator x,
+       XMLGenerator x,
        Widgets x) => MonadRender x
 
 template :: (HasAppConf m,
@@ -83,7 +77,7 @@ template' :: ( Happstack m
           -> String
           -> headers
           -> body
-          -> XMLGenT m (HSX.XML m)
+          -> GenXML m
 template' theme title headers body =
  do mUid <- lift $ lookMaybeUserId
     (_body', extraHeaders) <- listenHeaders (asChild body)
@@ -127,7 +121,7 @@ lightTemplate' :: ( MonadRoute m
                -> headers
                -> extraheaders
                -> body
-               -> XMLGenT m (HSX.XML m)
+               -> GenXML m
 lightTemplate' theme mUid title headers extraHeaders body =
     do conf <- askAppConf
        <html>
@@ -151,14 +145,6 @@ lightTemplate' theme mUid title headers extraHeaders body =
         </body>
         </html>
 
-{-
-twoColumn :: XMLGenerator x =>
-             [XMLGenT x (HSX.XML x)]   -- ^ header
-          -> [XMLGenT x (HSX.XML x)]   -- ^ footer
-          -> [[XMLGenT x (HSX.XML x)]] -- ^ left column
-          -> [[XMLGenT x (HSX.XML x)]] -- ^ right column
-          -> [XMLGenT x (HSX.XML x)]
--}
 twoColumn :: forall (m :: * -> *) c c1 c2 c3.
              (EmbedAsAttr m (Attr [Char] [Char]),
               EmbedAsChild m c2,
@@ -166,7 +152,7 @@ twoColumn :: forall (m :: * -> *) c c1 c2 c3.
               EmbedAsChild m c3,
               EmbedAsChild m c,
               EmbedAsChild m (HSX.XML m)) =>
-             c -> c3 -> c1 -> c2 -> [XMLGenT m (HSX.XML m)]
+             c -> c3 -> c1 -> c2 -> [GenXML m]
 twoColumn header footer left right =
     [<div id="two-column">
       <% header %>

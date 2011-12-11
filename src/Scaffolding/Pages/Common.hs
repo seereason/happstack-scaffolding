@@ -24,7 +24,7 @@ import Web.Routes (showURL, showURLParams)
 import Web.Routes.RouteT (MonadRoute, URL)
 import Web.Routes.XMLGenT ()
 
-seeOtherXML :: (Happstack m, MonadRender m) => String -> XMLGenT m (HSX.XML m)
+seeOtherXML :: (Happstack m, MonadRender m) => String -> GenXML m
 seeOtherXML loc = (seeOther loc =<< (<a href=loc><%  loc %></a>))
 
 seeOtherResponse :: (Happstack m, MonadRender m, ToMessage (HSX.XML m)) => String -> m Response

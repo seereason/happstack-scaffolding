@@ -20,7 +20,7 @@ import qualified Data.Sequence     as Seq
 import qualified Data.Text as Text
 import Happstack.Auth.Core.Profile (UserId)
 import Happstack.Server (Happstack, Response, ok, notFound, ToMessage)
-import HSP (XMLGenerator, EmbedAsChild(..), EmbedAsAttr(..), Attr(..), XMLGenT(..), unXMLGenT, genElement, genEElement)
+import HSP (XMLGenerator, GenXML, EmbedAsChild(..), EmbedAsAttr(..), Attr(..), unXMLGenT, genElement, genEElement)
 import qualified HSX.XMLGenerator  as HSX
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Comment.Acid (State, AcidComment(askAcidComment), AskComment(..), AskCommentsOn(..))
@@ -69,7 +69,7 @@ commentXML :: forall m topic.
                EmbedAsAttr m (Attr String (URL m)),
                MonadIO m,
                Functor m) =>
-              (UserId -> URL m) -> Comment -> XMLGenT m (HSX.XML m)
+              (UserId -> URL m) -> Comment -> GenXML m
 commentXML mkUserURL comment =
     do acid <- askAcidProfileData
        n   <- fmap ProfileData.username <$> query' acid  (ProfileData.AskRec (commenter comment))
@@ -107,7 +107,7 @@ commentsXML :: (MonadIO m,
                 EmbedAsAttr m (Attr String (URL m)),
                 EmbedAsChild m Text.Text,
                 EmbedAsChild m TextHtml) =>
-               (UserId -> URL m) -> Maybe (CommentList topic) -> XMLGenT m (HSX.XML m)
+               (UserId -> URL m) -> Maybe (CommentList topic) -> GenXML m
 commentsXML _ Nothing = <p>No comments yet.</p> -- FIXME: this is probably an internal error ?
 commentsXML mkUserURL (Just (CommentList _commentingOn comments))
     | Seq.null comments = <p>No comments yet.</p>
@@ -159,7 +159,7 @@ commentBox :: forall m topic. (MonadIO m,
                                Data topic,
                                Ord topic,
                                SafeCopy topic) =>
-              AcidState (State topic) -> (UserId -> URL m) -> (topic -> Doc) -> String -> topic -> XMLGenT m (HSX.XML m)
+              AcidState (State topic) -> (UserId -> URL m) -> (topic -> Doc) -> String -> topic -> GenXML m
 commentBox acid mkUserURL prettyTopic classes co =
     do comments' <- query' acid (AskCommentsOn co)
        cmtsXML <- commentsXML mkUserURL comments'

@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# OPTIONS_GHC -Wall -Wwarn -F -pgmFtrhsx #-}
+{-# OPTIONS_GHC -Wall -Werror -F -pgmFtrhsx #-}
 module Scaffolding.Pages.FormPart
     ( FormDF
     , formPart
@@ -14,6 +14,7 @@ module Scaffolding.Pages.FormPart
     , rowsToList
     , rowsToColumn
     , submitOnChange
+    , seqA
     ) where
 
 import Control.Applicative (Alternative, Applicative(pure), (*>))
@@ -33,7 +34,7 @@ import Text.Digestive ((++>), Validator, Transformer, Form(..), FormRange(..), R
 import Text.Digestive.Forms.Happstack (happstackEnvironment)
 import Text.Digestive.HSP.Html4 (errors)
 
-type FormDF m a = Form m [Input] String [XMLGenT m (HSX.XML m)] a
+type FormDF m a = Form m [Input] String [GenXML m] a
 
 -- | turn a formlet into XML+ServerPartT which can be embedded in a larger document
 formPart ::
@@ -41,9 +42,9 @@ formPart ::
   => String     -- ^ prefix
   -> Text       -- ^ url to POST form results to
   -> (a -> m b) -- ^ handler used when form validates
-  -> Maybe ([(FormRange, e)] -> [XMLGenT m (HSX.XML m)] -> m b) -- ^ handler used when form does not validate
+  -> Maybe ([(FormRange, e)] -> [GenXML m] -> m b) -- ^ handler used when form does not validate
   -> Form m [Input] e xml a      -- ^ the formlet
-  -> XMLGenT m (HSX.XML m)
+  -> GenXML m
 formPart prefix action handleSuccess mHandleFailure form =
   XMLGenT $ 
     msum [ do methodM [GET, HEAD]
@@ -73,14 +74,18 @@ formPart prefix action handleSuccess mHandleFailure form =
          ]
 
 
-multiFormPart ::
-  (EmbedAsChild m xml, EmbedAsAttr m (Attr String String), EmbedAsAttr m (Attr String Text), ToMessage b, Happstack m, Alternative m) 
-  => String -- ^ unique name for the formlet
-  -> Text -- ^ url to POST form results to
-  -> (a -> m b) -- ^ handler used when form validates
-   -> Maybe ([(FormRange, e)] -> [XMLGenT m (HSX.XML m)] -> m b) -- ^ handler used when form does not validate
-  -> Form m [Input] e xml a      -- ^ the formlet
-  -> XMLGenT m (HSX.XML m)
+multiFormPart :: (EmbedAsChild m xml,
+                  EmbedAsAttr m (Attr String String),
+                  EmbedAsAttr m (Attr String Text),
+                  ToMessage b,
+                  Happstack m,
+                  Alternative m) =>
+                 String -- ^ unique name for the formlet
+              -> Text -- ^ url to POST form results to
+              -> (a -> m b) -- ^ handler used when form validates
+              -> Maybe ([(FormRange, e)] -> [GenXML m] -> m b) -- ^ handler used when form does not validate
+              -> Form m [Input] e xml a      -- ^ the formlet
+              -> GenXML m
 multiFormPart name action success failure form = guard name (formPart name (action `Text.append` (Text.pack $ "?form=" ++ name)) success failure form)
     where
       guard :: (Happstack m) => String -> m a -> m a
@@ -125,7 +130,8 @@ nullToNothing =
 seqA :: (Functor m, Monad m) => [Form m i e v a] -> Form m i e [v] [a]
 seqA xs = sequenceA (map ((: []) `mapView`) xs)
                 
-rowsToList :: (XMLGenerator x, EmbedAsChild x v, Functor m, Monad m, Monoid a) => String -> [Form m i e v a] -> Form m i e [XMLGenT x (HSX.XML x)] a
+rowsToList :: (XMLGenerator x, Monoid b, Functor m, Monad m, EmbedAsChild x c, EmbedAsAttr x (Attr String a)) =>
+              a -> [Form m i e c b] -> Form m i e [GenXML x] b
 rowsToList class' [] = view [<div class=class'>(none)</div>] *> pure mempty
 rowsToList class' rows 
     = (\xs -> [<ul class=class'>
@@ -133,7 +139,8 @@ rowsToList class' rows
                </ul>])
       `mapView` (fmap mconcat $ seqA rows)
 
-rowsToColumn :: (XMLGenerator x, Applicative m, Monad m, Monoid a) => [Form m i e [XMLGenT x (HSX.XML x)] a] -> Form m i e [XMLGenT x (HSX.XML x)] a
+rowsToColumn :: (EmbedAsChild x [Char], Monoid b, Functor m, Monad m) =>
+                [Form m i e [GenXML x] b] -> Form m i e [XMLGenT x (HSX.XML x)] b
 rowsToColumn [] = view [<span>(none)</span>] *> pure mempty
 rowsToColumn rows = (mconcat . intersperse [<hr/>]) `mapView` (fmap mconcat $ seqA rows)
 

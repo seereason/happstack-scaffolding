@@ -1,3 +1,10 @@
+haskell-happstack-scaffolding (0.19) unstable; urgency=low
+
+  * Export seqA.
+  * Simplify type signatures: use aliases GenXML and GenChildList.
+
+ -- David Fox <dsf@seereason.com>  Sun, 11 Dec 2011 08:05:06 -0800
+
 haskell-happstack-scaffolding (0.18) unstable; urgency=low
 
   * Make the signatures of userMarkup and userLink more sane.

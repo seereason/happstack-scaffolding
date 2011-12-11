@@ -24,7 +24,7 @@ unicodeKeyPage =
     template "Unicode Keys" ([] :: [XML]) text
     where
       text = table tuplesOfInterest'
-      tuplesOfInterest' :: (XMLGenerator x) => [[ XMLGenT x (HSX.XML x) ]]
+      tuplesOfInterest' :: (XMLGenerator x) => [[ GenXML x ]]
       tuplesOfInterest' = map (map (spn . fmt)) tuplesOfInterest
           where spn t = <span> <% t %> </span>
                 fmt (s,c) = <table> <tr> <td style="width: 4em"> <% show c %> </td> <td style="width: 1em"> <% (c:[]) %> </td> <td> <% s %> </td> </tr></table>
@@ -32,7 +32,7 @@ unicodeKeyPage =
       tuplesOfInterest = tablify n $ UR.charsOfInterest
           where n :: Integer
                 n = 200
-      table :: (XMLGenerator x) => [[XMLGenT x (HSX.XML x)]] -> XMLGenT x (HSX.XML x)
+      table :: (XMLGenerator x) => [[GenXML x]] -> GenXML x
       table m =
           t
           where

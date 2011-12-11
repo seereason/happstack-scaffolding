@@ -97,7 +97,7 @@ editUserNamePage here =
               </div>
 
 editUserNameForm :: (FormInput i f, XMLGenerator x, Functor m, Monad m) =>
-                    Maybe Text -> Form m i e [XMLGenT x (HSX.XML x)] Text
+                    Maybe Text -> Form m i e [GenXML x] Text
 editUserNameForm mUsername = 
     (label "your name: " ++> inputText mUsername) <* submit "change name"
 
@@ -108,7 +108,7 @@ renderUser :: forall m.
                EmbedAsAttr m (Attr String (URL m)),
                EmbedAsChild m Text,
                MonadRoute m) =>
-             UserId -> XMLGenT m (HSX.XML m)
+             UserId -> GenXML m
 renderUser user =
     lookUsername' user >>= \ name ->
     <a href=(userURL user :: URL m)><% name %></a>

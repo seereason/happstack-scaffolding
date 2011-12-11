@@ -17,16 +17,13 @@ import qualified Data.Text as Text
 import Data.Text (Text)
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
-import HSP (XMLGenT(..))
+import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement)
 import HSP.Google.Analytics (UACCT)
+import Language.HJavaScript.Syntax (Block)
 import System.Console.GetOpt (ArgDescr(NoArg, ReqArg), ArgOrder(Permute), OptDescr(Option), getOpt)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
 import Web.Authenticate.Facebook (Facebook(..))
-
-import HSP (XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement)
-import qualified HSX.XMLGenerator as HSX
-import Language.HJavaScript.Syntax (Block)
 import Web.Routes.RouteT (URL, MonadRoute)
 
 data LogMode
@@ -104,7 +101,7 @@ data Menu url = Menu (MenuItem url)
 
 menuBar :: ( XMLGenerator m
            , EmbedAsAttr m (Attr String a)) =>
-           [Menu a] -> XMLGenT m (HSX.XML m)
+           [Menu a] -> GenXML m
 menuBar [] = <div id="menubar"></div>
 menuBar menus =
     <div id="menubar">
@@ -118,8 +115,8 @@ menuBar menus =
 data (EmbedAsChild m (Block ()), MonadRoute m, XMLGenerator m) => Theme m
     = Theme
       { menu :: Maybe UserId -> [Menu (URL m)]
-      , footer :: XMLGenT m (HSX.XML m)
-      , widgetHeaders :: XMLGenT m [HSX.Child m]
+      , footer :: GenXML m
+      , widgetHeaders :: GenChildList m
       }
 
 class HasAppConf m where
