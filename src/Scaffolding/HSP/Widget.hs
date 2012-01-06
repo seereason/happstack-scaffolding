@@ -1,4 +1,5 @@
-{-# LANGUAGE EmptyDataDecls, FlexibleContexts, FlexibleInstances, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, PackageImports, RankNTypes, ScopedTypeVariables, TypeSynonymInstances, UndecidableInstances, TypeFamilies #-}
+{-# LANGUAGE EmptyDataDecls, FlexibleContexts, FlexibleInstances, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses,
+             OverlappingInstances, PackageImports, RankNTypes, ScopedTypeVariables, TypeSynonymInstances, UndecidableInstances, TypeFamilies #-}
 {-# OPTIONS -F -pgmFtrhsx -Wwarn -fno-warn-orphans -fno-warn-name-shadowing -fno-warn-unused-matches #-}
 module Scaffolding.HSP.Widget where
 

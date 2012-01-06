@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.20) unstable; urgency=low
+
+  * Jeremy's workaround to bug 5751.
+
+ -- David Fox <dsf@seereason.com>  Thu, 05 Jan 2012 21:50:15 -0800
+
 haskell-happstack-scaffolding (0.19) unstable; urgency=low
 
   * Export seqA.
