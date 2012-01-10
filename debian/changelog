@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.21) unstable; urgency=low
+
+  * Not sure what baseURI in AppConf should be, so make it a parameter.
+
+ -- David Fox <dsf@seereason.com>  Tue, 10 Jan 2012 13:50:18 -0800
+
 haskell-happstack-scaffolding (0.20) unstable; urgency=low
 
   * Jeremy's workaround to bug 5751.

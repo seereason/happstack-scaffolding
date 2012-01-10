@@ -46,10 +46,10 @@ data AppConf
               , addAdmin   :: [UserId]
               }
 
-defaultConf :: Maybe Facebook -> String -> AppConf
-defaultConf appFacebook progName
+defaultConf :: Text -> Maybe Facebook -> String -> AppConf
+defaultConf uri appFacebook progName
     = AppConf { httpConf = nullConf -- { port = maybe 80 (read . drop 1 . uriPort) $ uriAuthority (connectURL facebookConfig)  }
-              , baseURI  = (Text.pack "/")
+              , baseURI  = uri
               , store    = "_local/" ++ progName ++ "_state"
               , static   = "."
               , imageStore = "_local/imageStore"
