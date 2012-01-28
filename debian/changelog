@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.22) unstable; urgency=low
+
+  * Remove dependencies on happstack-extra and happstack.
+
+ -- David Fox <dsf@seereason.com>  Sat, 28 Jan 2012 07:20:19 -0800
+
 haskell-happstack-scaffolding (0.21) unstable; urgency=low
 
   * Not sure what baseURI in AppConf should be, so make it a parameter.

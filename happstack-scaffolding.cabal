@@ -1,5 +1,5 @@
 Name:             happstack-scaffolding
-Version:          0.21
+Version:          0.22
 License:          AllRightsReserved
 Copyright:        (c) 2010-2011, SeeReason Partners LLC
 Author:           SeeReason Partners <partners@seereason.com>
@@ -61,10 +61,8 @@ Library
                    directory,
                    fgl,
                    filepath,
-                   happstack,
                    happstack-authenticate >= 0.6,
                    happstack-data >= 0.5,
-                   happstack-extra >= 0.87,
                    happstack-hsp,
                    happstack-search,
                    ixset,
