@@ -49,7 +49,7 @@ data Record
                 , roles    :: Set Role
                 }
     deriving (Eq, Ord, Read, Show, Typeable, Data)
-$(deriveSafeCopy 2 'extension ''Record)
+$(deriveSafeCopy 2 'base ''Record)
 
 data Error
     = InvalidUserId UserId
@@ -161,32 +161,3 @@ initial = State { records = IxSet.empty }
 
 initialRecord :: UserId -> Record
 initialRecord u = Record u (pack "Anonymous") Nothing False (Set.singleton User)
-
--- Migration
-
--- Copy for migration
-data FormulaStyle
-    = Descriptive
-    | Symbolic
-      deriving (Eq, Ord, Read, Show, Typeable, Data)
-$(deriveSafeCopy 1 'base ''FormulaStyle)
-
-data Record_v1 = 
-    Record_v1 { dataFor_v1  :: UserId
-              , username_v1 :: Text
-              , email_v1    :: Maybe Text
-              , optOut_v1   :: Bool
-              , roles_v1    :: Set Role
-              , _formulaStyle_v1 :: FormulaStyle
-              } deriving (Eq, Ord, Read, Show, Typeable, Data)
-$(deriveSafeCopy 1 'base ''Record_v1)
-
-instance Migrate Record where
-    type MigrateFrom Record = Record_v1
-    migrate x@(Record_v1 {}) = Record { dataFor = dataFor_v1 x
-                                      , username = username_v1 x
-                                      , email = email_v1 x
-                                      , optOut = optOut_v1 x
-                                      , roles = roles_v1 x
-                                      -- discarding old formulaStyle
-                                      }
