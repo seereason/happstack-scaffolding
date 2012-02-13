@@ -180,6 +180,8 @@ Description: Scaffolding library derived from the seereason web application
  .
  This package contains the libraries compiled with profiling enabled.
 
+# Building the doc causes a stack overflow in haddock.
+#
 # Package: libghc-happstack-scaffolding-doc
 # Architecture: all
 # Section: doc

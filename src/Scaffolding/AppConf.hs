@@ -20,7 +20,7 @@ import Happstack.Server (Conf(validator, port), nullConf)
 import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement)
 import HSP.Google.Analytics (UACCT)
 import Language.HJavaScript.Syntax (Block)
-import System.Console.GetOpt (ArgDescr(NoArg, ReqArg), ArgOrder(Permute), OptDescr(Option), getOpt, usageInfo)
+import System.Console.GetOpt (ArgDescr(NoArg, ReqArg), ArgOrder(Permute), OptDescr(Option), getOpt)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
 import Web.Authenticate.Facebook (Facebook(..))
@@ -112,7 +112,7 @@ menuBar menus =
     where
       mkMenu (Menu (MenuItem name loc)) = <li><a href=loc><% name %></a></li>
 
-data (EmbedAsChild m (Block ()), MonadRoute m, XMLGenerator m) => Theme m
+data Theme m
     = Theme
       { menu :: Maybe UserId -> [Menu (URL m)]
       , footer :: GenXML m

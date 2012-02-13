@@ -41,8 +41,8 @@ data Role
       deriving (Eq, Ord, Read, Show, Typeable, Data)
 $(deriveSafeCopy 1 'base ''Role)
 
-data Record = 
-    Record { dataFor  :: UserId
+data Record
+    = Record { dataFor  :: UserId
                 , username :: Text
                 , email    :: Maybe Text
                 , optOut   :: Bool

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
+{-# LANGUAGE DatatypeContexts, DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
     PackageImports, RankNTypes, TemplateHaskell, TypeFamilies, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 {-# OPTIONS -Wall -Wwarn -fno-warn-orphans #-}
 module Scaffolding.Comment.Acid
@@ -20,7 +20,6 @@ import Data.Acid               (AcidState, Update, Query, makeAcidic)
 import Data.Data               (Typeable)
 import Data.Foldable           (toList)
 import Data.IxSet ({-inferIxSet,-} Indexable, IxSet, ixSet, noCalcs, flattenWithCalcs)
-import qualified Data.IxSet
 import Data.IxSet.Ix (Ix(Ix))
 import Data.List               (find)
 import qualified Data.Map as Map
@@ -55,7 +54,7 @@ instance (Data topic, Ord topic) => Indexable (CommentList topic) where
 
 type Comments topic = IxSet (CommentList topic)
 
-data (Data topic, {- Typeable topic, Eq topic, -} Ord topic) => State topic =
+data (Data topic, Ord topic) => State topic =
     State { commentLists  :: Comments topic
           , nextCommentId :: CommentId
           } deriving (Data, Eq, Ord, Show, Typeable)
