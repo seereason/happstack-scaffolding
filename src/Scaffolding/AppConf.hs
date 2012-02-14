@@ -20,7 +20,7 @@ import Happstack.Server (Conf(validator, port), nullConf)
 import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement)
 import HSP.Google.Analytics (UACCT)
 import Language.HJavaScript.Syntax (Block)
-import System.Console.GetOpt (ArgDescr(NoArg, ReqArg), ArgOrder(Permute), OptDescr(Option), getOpt)
+import System.Console.GetOpt (ArgDescr(NoArg, ReqArg), ArgOrder(Permute), OptDescr(Option), getOpt, usageInfo)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
 import Web.Authenticate.Facebook (Facebook(..))
@@ -94,7 +94,7 @@ parseConfig args appUACCT
         (flags,_,[]) -> 
             let modAppConf = \appConf -> foldr ($) appConf flags
             in Right modAppConf
-        (_,_,errs)   -> Left errs
+        (_,_,errs)   -> Left (errs ++ [usageInfo "usage:" (opts Nothing)] )
 
 data MenuItem url = MenuItem String url
 data Menu url = Menu (MenuItem url)
