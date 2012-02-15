@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.23) unstable; urgency=low
+
+  * Rename module Scaffolding.ProfileData.URL -> Scaffolding.MkURL
+
+ -- David Fox <dsf@seereason.com>  Wed, 15 Feb 2012 10:38:10 -0800
+
 haskell-happstack-scaffolding (0.22) unstable; urgency=low
 
   * Remove dependencies on happstack-extra and happstack.

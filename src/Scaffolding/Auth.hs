@@ -26,9 +26,9 @@ import Scaffolding.Pages.AppTemplate (MonadRender, template)
 import Scaffolding.Pages.Unauthorized (unauthorizedPage)
 import qualified Scaffolding.ProfileData.Acid as ProfileData
 import qualified Scaffolding.ProfileData.Parts as ProfileData
-import qualified Scaffolding.ProfileData.URL as ProfileData
+import qualified Scaffolding.MkURL as MkURL
 import Scaffolding.ProfileData.User (MonadUser, MonadUserName, askAcidAuth, askAcidProfileData, lookMaybeUserId)
-import Scaffolding.ProfileData.URL (MkURL)
+import Scaffolding.MkURL (MkURL)
 import Text.Blaze (Html)
 import Text.Blaze.Renderer.String (renderHtml)
 import Web.Routes (MonadRoute(askRouteFn), RouteT(unRouteT), nestURL, showURL)
@@ -58,9 +58,9 @@ doAuth :: forall m v weburl.
 doAuth realm url =
     do conf <- askAppConf
        acidAuth <- askAcidAuth
-       onAuthURL <- showURL (ProfileData.profileURL P_PickProfile)
+       onAuthURL <- showURL (MkURL.profileURL P_PickProfile)
        showFn <- askRouteFn
-       liftRoute' . nestURL ProfileData.authURL . unRoute $ (handleAuth acidAuth (urlTemplate' showFn) (facebook conf) realm onAuthURL url)
+       liftRoute' . nestURL MkURL.authURL . unRoute $ (handleAuth acidAuth (urlTemplate' showFn) (facebook conf) realm onAuthURL url)
     where
       liftRoute' :: RouteT weburl v a -> m weburl a
       liftRoute' = liftRoute
@@ -90,16 +90,16 @@ doProfile :: forall m v weburl.
           -> ProfileURL
           -> m weburl Response
 doProfile acidAuth acidProfile profileURL =
-    do postPickedURL <- showURL (ProfileData.mkURL ProfileData.CreateNew)
+    do postPickedURL <- showURL (MkURL.mkURL MkURL.CreateNew)
        showFn <- askRouteFn
-       liftRoute' . nestURL ProfileData.profileURL . unRoute' $ handleProfile acidAuth acidProfile (urlTemplate showFn) postPickedURL profileURL
+       liftRoute' . nestURL MkURL.profileURL . unRoute' $ handleProfile acidAuth acidProfile (urlTemplate showFn) postPickedURL profileURL
     where
       liftRoute' :: RouteT weburl v a -> m weburl a
       liftRoute' = liftRoute
       unRoute' :: m ProfileURL a -> RouteT ProfileURL v a
       unRoute' = unRoute
 
-doProfileData :: (ProfileData.MkURL (URL m),
+doProfileData :: (MkURL.MkURL (URL m),
                   MonadRender m,
                   MonadUserName m,
                   HasAppConf m,
@@ -110,17 +110,17 @@ doProfileData :: (ProfileData.MkURL (URL m),
                  AcidState AuthState
               -> AcidState ProfileState
               -> AcidState ProfileData.State
-              -> ProfileData.URL
+              -> MkURL.URL
               -> m Response
 doProfileData _acidAuth _acidProfile _acidProfileData profileDataURL =
-    do postCreateURL <- showURL (ProfileData.mkURL ProfileData.Edit)
+    do postCreateURL <- showURL (MkURL.mkURL MkURL.Edit)
        ProfileData.handle postCreateURL profileDataURL
 
 instance (Functor m, Monad m) => EmbedAsChild (RouteT url m) Html where
     asChild html = asChild (CDATA False (renderHtml html))
 
 requiresRole :: (URL m ~ weburl,
-                 ProfileData.MkURL (URL m),
+                 MkURL.MkURL (URL m),
                  MonadUserName m,
                  MonadRender m,
                  Happstack m,
@@ -132,7 +132,7 @@ requiresRole :: (URL m ~ weburl,
 requiresRole role url =
     do mu <- lookMaybeUserId
        case mu of
-         Nothing -> escape $ seeOtherURL (ProfileData.authURL A_Login)
+         Nothing -> escape $ seeOtherURL (MkURL.authURL A_Login)
          (Just uid) -> 
              do apd <- askAcidProfileData
                 r <- query' apd (ProfileData.HasRole uid role)

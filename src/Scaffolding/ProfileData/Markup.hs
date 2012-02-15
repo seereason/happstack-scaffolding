@@ -9,7 +9,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Happstack.Auth.Core.Profile (UserId(..))
 import HSP (GenXML, XMLGenerator, EmbedAsAttr(..), genElement, asChild, Attr((:=)), asAttr)
-import Scaffolding.ProfileData.URL (MkURL(userURL))
+import Scaffolding.MkURL (MkURL(userURL))
 import Scaffolding.ProfileData.User (MonadUserName, userName)
 import Web.Routes (showURL)
 import Web.Routes.RouteT (MonadRoute, URL)

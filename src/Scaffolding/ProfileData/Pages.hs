@@ -21,7 +21,7 @@ import Scaffolding.Pages.AppTemplate (MonadRender, template)
 import Scaffolding.Pages.FormPart (FormDF, formPart, fieldset, li, ol, nullToNothing)
 import Scaffolding.Pages.InternalServerError (internalServerErrorPage)
 import qualified Scaffolding.ProfileData.Acid as ProfileData
-import Scaffolding.ProfileData.URL (MkURL(userURL))
+import Scaffolding.MkURL (MkURL(userURL))
 import Scaffolding.ProfileData.User (MonadUserName, askAcidProfileData, lookUser, lookUsername, lookUsername')
 import Scaffolding.Session (requireSession)
 import Text.Digestive              ((++>), (<++), transform)

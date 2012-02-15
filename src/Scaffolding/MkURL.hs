@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, TemplateHaskell #-}
-module Scaffolding.ProfileData.URL 
+module Scaffolding.MkURL
        ( URL(..)
        , MkURL(..)
        ) where
@@ -12,7 +12,7 @@ import Happstack.Auth.Core.ProfileURL (ProfileURL)
 import Test.QuickCheck     (Arbitrary(..),oneof)
 import Web.Routes.TH       (derivePathInfo)
 
-data URL 
+data URL
     = CreateNew
     | View UserId
     | EditUserName

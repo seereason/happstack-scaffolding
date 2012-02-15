@@ -15,18 +15,18 @@ import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Pages.AppTemplate (MonadRender)
 import qualified Scaffolding.ProfileData.Acid as ProfileData
 import Scaffolding.ProfileData.Pages (editProfileDataPage, editUserNamePage)
-import qualified Scaffolding.ProfileData.URL as ProfileData
+import qualified Scaffolding.MkURL as MkURL
 import Scaffolding.ProfileData.User (MonadUserName, askAcidAuth, askAcidProfile, askAcidProfileData)
 import Text.JSON                     (encode)
 import Web.Routes.Happstack          (seeOtherURL)
 import Web.Routes.RouteT (MonadRoute, URL)
 
-handle :: (Happstack m, MonadRoute m, MonadIO m, MonadUserName m, MonadRender m, HasAppConf m, ProfileData.MkURL (URL m),
+handle :: (Happstack m, MonadRoute m, MonadIO m, MonadUserName m, MonadRender m, HasAppConf m, MkURL.MkURL (URL m),
            EmbedAsAttr m (Attr String (URL m)), ToMessage (HSX.XML m)) =>
-          Text -> ProfileData.URL -> m Response
+          Text -> MkURL.URL -> m Response
 handle postCreateURL url =
     case url of
-      ProfileData.CreateNew ->
+      MkURL.CreateNew ->
           do authH <- askAcidAuth
              profileH <- askAcidProfile
              mUserId <- getUserId authH profileH
@@ -37,17 +37,17 @@ handle postCreateURL url =
                       profileDataH <- askAcidProfileData
                       mpd <- update' profileDataH (ProfileData.NewRec rec)
                       case mpd of
-                        Nothing  -> seeOtherURL (ProfileData.userURL uid)
+                        Nothing  -> seeOtherURL (MkURL.userURL uid)
                         (Just _) -> seeOther postCreateURL (toResponse ())
-      (ProfileData.View uid) ->
+      (MkURL.View uid) ->
           do profileDataH <- askAcidProfileData
              mProfileData <- query' profileDataH (ProfileData.AskRec uid)
              ok $ toResponse $ show mProfileData
-      ProfileData.EditUserName ->
-          do editUserNamePage (ProfileData.mkURL url)
-      ProfileData.Edit ->
-          do editProfileDataPage (ProfileData.mkURL url)
-      ProfileData.JSONAllUserIdsAndNames ->
+      MkURL.EditUserName ->
+          do editUserNamePage (MkURL.mkURL url)
+      MkURL.Edit ->
+          do editProfileDataPage (MkURL.mkURL url)
+      MkURL.JSONAllUserIdsAndNames ->
           do profileDataH <- askAcidProfileData
              uan <- query' profileDataH ProfileData.AllUserIdsAndNames
              setHeaderM "content-type" "application/json"

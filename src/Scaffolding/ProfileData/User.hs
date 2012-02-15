@@ -21,7 +21,7 @@ import Happstack.Auth.Core.Profile (UserId(..), getUserId, ProfileState)
 import Happstack.Server (Happstack, ToMessage(..), escape, toResponse, internalServerError)
 import HSP (XMLGenT(..))
 import qualified Scaffolding.ProfileData.Acid as ProfileData
-import Scaffolding.ProfileData.URL (MkURL(authURL))
+import Scaffolding.MkURL (MkURL(authURL))
 import Web.Routes.Happstack (seeOtherURL) -- ServerMonad, WebWonad, and FilterMonad instances
 import Web.Routes.RouteT (MonadRoute(..), URL)
 import Web.Routes.XMLGenT () -- ShowURL XMLGenT  instance

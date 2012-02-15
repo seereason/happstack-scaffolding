@@ -1,5 +1,5 @@
 Name:             happstack-scaffolding
-Version:          0.22
+Version:          0.23
 License:          AllRightsReserved
 Copyright:        (c) 2010-2011, SeeReason Partners LLC
 Author:           SeeReason Partners <partners@seereason.com>
@@ -27,6 +27,7 @@ Library
                    Scaffolding.HJScriptExtra
                    Scaffolding.HSP.Widget
                    Scaffolding.Markdown
+                   Scaffolding.MkURL
                    Scaffolding.MonadStack.Acid
                    Scaffolding.MonadStack.ExtraState
                    Scaffolding.MonadStack.Headers
@@ -42,7 +43,6 @@ Library
                    Scaffolding.ProfileData.Markup
                    Scaffolding.ProfileData.Pages
                    Scaffolding.ProfileData.Parts
-                   Scaffolding.ProfileData.URL
                    Scaffolding.ProfileData.User
                    Scaffolding.Session
                    Scaffolding.TimeExtra
