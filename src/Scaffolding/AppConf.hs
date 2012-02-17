@@ -39,6 +39,7 @@ data AppConf
               , imageStore :: FilePath
               , imageCache :: FilePath
               , logs       :: FilePath
+              , favicon    :: FilePath
               , logMode    :: LogMode
               , facebook   :: Maybe Facebook
               , sshProxy   :: Bool
@@ -46,8 +47,8 @@ data AppConf
               , addAdmin   :: [UserId]
               }
 
-defaultConf :: Text -> Maybe Facebook -> String -> AppConf
-defaultConf uri appFacebook progName
+defaultConf :: Text -> Maybe Facebook -> FilePath -> String -> AppConf
+defaultConf uri appFacebook favicon progName
     = AppConf { httpConf = nullConf -- { port = maybe 80 (read . drop 1 . uriPort) $ uriAuthority (connectURL facebookConfig)  }
               , baseURI  = uri
               , store    = "_local/" ++ progName ++ "_state"
@@ -57,6 +58,7 @@ defaultConf uri appFacebook progName
               , logs     = "_local"
               , logMode  = Development
               , facebook = appFacebook
+              , favicon  = favicon
               , sshProxy = False
               , uacct    = Nothing
               , addAdmin = []
@@ -76,6 +78,7 @@ opts appUACCT =
        , Option [] ["enable-analytics"] (NoArg  (      \c -> c { uacct = appUACCT })) "Enable google analytics tracking."
        , Option [] ["facebook-config"]  (ReqArg setFacebookConfig "app_id, app_secret") "Facebook app credentials"
        , Option [] ["add-admin"]        (ReqArg (\h -> \c -> c {addAdmin = UserId (read h) : addAdmin c}) "userId") "Make a user an Admin and then exit."
+       , Option [] ["favicon"]          (ReqArg (\h -> \c -> c {favicon = h}) "PATH") "Specify where to find the favicon file relative to the static directory"
        ]
            where
              setFacebookConfig h =

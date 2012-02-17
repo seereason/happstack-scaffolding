@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.24) unstable; urgency=low
+
+  * Add a favicon argument to the default configuration function.
+
+ -- David Fox <dsf@seereason.com>  Fri, 17 Feb 2012 08:39:46 -0800
+
 haskell-happstack-scaffolding (0.23) unstable; urgency=low
 
   * Rename module Scaffolding.ProfileData.URL -> Scaffolding.MkURL
