@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.25) unstable; urgency=low
+
+  * AppConf changes - remove store, imageStore and imageCache, add top.
+
+ -- David Fox <dsf@seereason.com>  Fri, 30 Mar 2012 15:40:16 -0700
+
 haskell-happstack-scaffolding (0.24) unstable; urgency=low
 
   * Add a favicon argument to the default configuration function.

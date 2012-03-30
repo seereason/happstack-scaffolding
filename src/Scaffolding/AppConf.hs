@@ -13,14 +13,13 @@ module Scaffolding.AppConf
     , HasAppConf(askAppConf, askTheme)
     ) where
 
-import qualified Data.Text as Text
-import Data.Text (Text)
+import Data.Text (Text, pack, empty)
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
 import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement)
 import HSP.Google.Analytics (UACCT)
 import Language.HJavaScript.Syntax (Block)
-import System.Console.GetOpt (ArgDescr(NoArg, ReqArg), ArgOrder(Permute), OptDescr(Option), getOpt, usageInfo)
+import System.Console.GetOpt (ArgDescr(..), ArgOrder(..), OptDescr(..), getOpt, usageInfo)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
 import Web.Authenticate.Facebook (Facebook(..))
@@ -34,10 +33,8 @@ data LogMode
 data AppConf
     = AppConf { httpConf   :: Conf
               , baseURI    :: Text
-              , store      :: FilePath
+              , top        :: FilePath
               , static     :: FilePath 
-              , imageStore :: FilePath
-              , imageCache :: FilePath
               , logs       :: FilePath
               , favicon    :: FilePath
               , logMode    :: LogMode
@@ -47,14 +44,12 @@ data AppConf
               , addAdmin   :: [UserId]
               }
 
-defaultConf :: Text -> Maybe Facebook -> FilePath -> String -> AppConf
-defaultConf uri appFacebook favicon progName
+defaultConf :: Maybe Facebook -> FilePath -> String -> AppConf
+defaultConf appFacebook favicon progName
     = AppConf { httpConf = nullConf -- { port = maybe 80 (read . drop 1 . uriPort) $ uriAuthority (connectURL facebookConfig)  }
-              , baseURI  = uri
-              , store    = "_local/" ++ progName ++ "_state"
+              , baseURI  = pack (progName ++ ": missing --base-uri option")
+              , top      = "_local"
               , static   = "."
-              , imageStore = "_local/imageStore"
-              , imageCache = "_local/imageCache"
               , logs     = "_local"
               , logMode  = Development
               , facebook = appFacebook
@@ -69,9 +64,9 @@ type Flag = AppConf -> AppConf
 opts :: Maybe UACCT -> [OptDescr Flag]
 opts appUACCT =
        [ Option [] ["http-port"]        (ReqArg (\h -> \c -> c { httpConf = (httpConf c) {port = read h} }) "port") "port to bind http server"
-       , Option [] ["base-uri"]         (ReqArg (\h -> \c -> c {baseURI = Text.pack h}) "uri") "http://servername:<port>/"
+       , Option [] ["base-uri"]         (ReqArg (\h -> \c -> c {baseURI = pack h}) "uri") "http://servername:<port>/"
        , Option [] ["no-validate"]      (NoArg (       \c -> c { httpConf = (httpConf c) { validator = Nothing } })) "Turn off HTML validation"
-       , Option [] ["store"]            (ReqArg (\h -> \c -> c {store = h}) "PATH") "The directory used for database storage."
+       , Option [] ["top"]              (ReqArg (\h -> \c -> c {top = h}) "PATH") "The top of the directory tree where the app can write files."
        , Option [] ["static"]           (ReqArg (\h -> \c -> c {static = h}) "PATH") "The directory searched for static files" 
        , Option [] ["logs"]             (ReqArg (\h -> \c -> c {logs = h}) "PATH") "The directory to store log files in"
        , Option [] ["log-mode"]         (ReqArg (\h -> \c -> c {logMode = read h}) (show ([minBound .. maxBound] :: [LogMode]))) "The logging mode to use"
@@ -86,9 +81,9 @@ opts appUACCT =
                             _ <- char ','
                             spaces
                             appSecret <- many1 alphaNum
-                            return (Facebook (Text.pack appId) (Text.pack appSecret) Text.empty)
+                            return (Facebook (pack appId) (pack appSecret) empty)
                  in case parse p h h of
-                      (Left e) -> error $ show e
+                      (Left e) -> error $ "AppConf: " ++ show e
                       (Right f) -> \c -> c { facebook = Just f }
 
 parseConfig :: [String] -> Maybe UACCT -> Either [String] (AppConf -> AppConf)
