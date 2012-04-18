@@ -216,18 +216,18 @@ Description: Scaffolding library derived from the seereason web application
  .
  This package contains the libraries compiled with profiling enabled.
 
-Package: libghc-happstack-scaffolding-doc
-Architecture: all
-Section: doc
-Depends: ${haskell:Depends},
-         ${misc:Depends}
-Recommends: ${haskell:Recommends}
-Suggests: ${haskell:Suggests}
-Description: Scaffolding library derived from the seereason web application
- Modules pulled out of the seereason.com application for use as a template
- for creating new apps.
- .
-  Author: SeeReason Partners <partners@seereason.com>
-  Upstream-Maintainer: SeeReason Partners <partners@seereason.com>
- .
- This package contains the documentation files.
+# Package: libghc-happstack-scaffolding-doc
+# Architecture: all
+# Section: doc
+# Depends: ${haskell:Depends},
+#          ${misc:Depends}
+# Recommends: ${haskell:Recommends}
+# Suggests: ${haskell:Suggests}
+# Description: Scaffolding library derived from the seereason web application
+#  Modules pulled out of the seereason.com application for use as a template
+#  for creating new apps.
+#  .
+#   Author: SeeReason Partners <partners@seereason.com>
+#   Upstream-Maintainer: SeeReason Partners <partners@seereason.com>
+#  .
+#  This package contains the documentation files.
