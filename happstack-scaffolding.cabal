@@ -1,5 +1,5 @@
 Name:             happstack-scaffolding
-Version:          0.25
+Version:          0.26
 License:          AllRightsReserved
 Copyright:        (c) 2010-2011, SeeReason Partners LLC
 Author:           SeeReason Partners <partners@seereason.com>
@@ -60,9 +60,10 @@ Library
                    digestive-functors-happstack,
                    digestive-functors-hsp,
                    directory,
+                   fb,
                    fgl,
                    filepath,
-                   happstack-authenticate >= 0.6,
+                   happstack-authenticate >= 0.7.5,
                    happstack-data >= 0.5,
                    happstack-hsp,
                    happstack-search,
@@ -77,6 +78,7 @@ Library
                    hsx >= 0.8,
                    hsx-jmacro,
                    html,
+                   http-types,
                    jmacro,
                    json,
                    mtl,

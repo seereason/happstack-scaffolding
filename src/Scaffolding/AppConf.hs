@@ -14,6 +14,7 @@ module Scaffolding.AppConf
     ) where
 
 import Data.Text (Text, pack, empty)
+import Data.Text.Encoding (encodeUtf8)
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
 import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement)
@@ -22,7 +23,7 @@ import Language.HJavaScript.Syntax (Block)
 import System.Console.GetOpt (ArgDescr(..), ArgOrder(..), OptDescr(..), getOpt, usageInfo)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
-import Web.Authenticate.Facebook (Facebook(..))
+import Facebook (Credentials(..))
 import Web.Routes.RouteT (URL, MonadRoute)
 
 data LogMode
@@ -38,13 +39,13 @@ data AppConf
               , logs       :: FilePath
               , favicon    :: FilePath
               , logMode    :: LogMode
-              , facebook   :: Maybe Facebook
+              , facebook   :: Maybe Credentials
               , sshProxy   :: Bool
               , uacct      :: Maybe UACCT
               , addAdmin   :: [UserId]
               }
 
-defaultConf :: Maybe Facebook -> FilePath -> String -> AppConf
+defaultConf :: Maybe Credentials -> FilePath -> String -> AppConf
 defaultConf appFacebook favicon progName
     = AppConf { httpConf = nullConf -- { port = maybe 80 (read . drop 1 . uriPort) $ uriAuthority (connectURL facebookConfig)  }
               , baseURI  = pack (progName ++ ": missing --base-uri option")
@@ -61,8 +62,8 @@ defaultConf appFacebook favicon progName
 
 type Flag = AppConf -> AppConf
 
-opts :: Maybe UACCT -> [OptDescr Flag]
-opts appUACCT =
+opts :: String -> Maybe UACCT -> [OptDescr Flag]
+opts appName appUACCT =
        [ Option [] ["http-port"]        (ReqArg (\h -> \c -> c { httpConf = (httpConf c) {port = read h} }) "port") "port to bind http server"
        , Option [] ["base-uri"]         (ReqArg (\h -> \c -> c {baseURI = pack h}) "uri") "http://servername:<port>/"
        , Option [] ["no-validate"]      (NoArg (       \c -> c { httpConf = (httpConf c) { validator = Nothing } })) "Turn off HTML validation"
@@ -81,18 +82,18 @@ opts appUACCT =
                             _ <- char ','
                             spaces
                             appSecret <- many1 alphaNum
-                            return (Facebook (pack appId) (pack appSecret) empty)
+                            return (Credentials (encodeUtf8 (pack appName)) (encodeUtf8 (pack appId)) (encodeUtf8 (pack appSecret)))
                  in case parse p h h of
                       (Left e) -> error $ "AppConf: " ++ show e
                       (Right f) -> \c -> c { facebook = Just f }
 
-parseConfig :: [String] -> Maybe UACCT -> Either [String] (AppConf -> AppConf)
-parseConfig args appUACCT
-    = case getOpt Permute (opts appUACCT) args of
+parseConfig :: [String] -> String -> Maybe UACCT -> Either [String] (AppConf -> AppConf)
+parseConfig args appName appUACCT
+    = case getOpt Permute (opts appName appUACCT) args of
         (flags,_,[]) -> 
             let modAppConf = \appConf -> foldr ($) appConf flags
             in Right modAppConf
-        (_,_,errs)   -> Left (errs ++ [usageInfo "usage:" (opts Nothing)] )
+        (_,_,errs)   -> Left (errs ++ [usageInfo "usage:" (opts appName Nothing)] )
 
 data MenuItem url = MenuItem String url
 data Menu url = Menu (MenuItem url)

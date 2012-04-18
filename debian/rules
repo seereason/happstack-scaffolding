@@ -7,5 +7,5 @@ include /usr/share/cdbs/1/class/hlibrary.mk
 
 
 # How to install an extra file into the documentation package
-#binary-fixup/libghc-scaffolding-doc::
-#	echo "Some informative text" > debian/libghc-scaffolding-doc/usr/share/doc/libghc-scaffolding-doc/AnExtraDocFile
+#binary-fixup/libghc-happstack-scaffolding-doc::
+#	echo "Some informative text" > debian/libghc-happstack-scaffolding-doc/usr/share/doc/libghc-happstack-scaffolding-doc/AnExtraDocFile
