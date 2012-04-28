@@ -13,7 +13,7 @@ import Scaffolding.ProfileData.User (MonadUser)
 import Web.Routes.RouteT (MonadRoute, URL)
 
 
-unauthorizedPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr String (URL m)), ToMessage (HSX.XML m)) =>
+unauthorizedPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr String (URL m)), ToMessage (HSX.XMLType m)) =>
                     String -> m Response
 unauthorizedPage msg =
     do unauthorized =<< template "Unauthorized" () 

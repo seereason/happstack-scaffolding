@@ -38,7 +38,7 @@ import Web.Routes.RouteT (MonadRoute, URL)
 doComment :: forall topic m.
              (Happstack m,
               MonadRoute m,
-              ToMessage (HSX.XML m),
+              ToMessage (HSX.XMLType m),
               MonadUserName m,
               MonadRender m,
               HasAppConf m,
@@ -102,7 +102,7 @@ commentsXML :: (MonadIO m,
                 Functor m,
                 MonadUserName m,
                 Comment.MkURL topic (URL m),
-                -- HSX.XML m ~ TextHtml,
+                -- HSX.XMLType m ~ TextHtml,
                 XMLGenerator m,
                 EmbedAsAttr m (Attr String (URL m)),
                 EmbedAsChild m Text.Text,
@@ -119,7 +119,7 @@ commentsXML mkUserURL (Just (CommentList _commentingOn comments))
 
 
 commentPage :: (MonadRender m,
-                ToMessage (HSX.XML m),
+                ToMessage (HSX.XMLType m),
                 MonadUserName m,
                 Happstack m,
                 MonadRoute m,

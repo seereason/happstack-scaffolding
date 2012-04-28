@@ -23,7 +23,7 @@ commentSpamPage :: forall m topic.
                    (Happstack m,
                     MonadRoute m,
                     HasAppConf m,
-                    ToMessage (HSX.XML m),
+                    ToMessage (HSX.XMLType m),
                     MonadUser m,
                     MonadRender m,
                     AcidComment topic m,

@@ -45,7 +45,7 @@ class (Functor x,
        Widgets x) => MonadRender x
 
 template :: (HasAppConf m,
-             ToMessage (HSX.XML m),
+             ToMessage (HSX.XMLType m),
              MonadUser m,
              MonadRoute m,
              Happstack m,
@@ -84,7 +84,7 @@ template' theme title headers body =
     lightTemplate' theme mUid title headers extraHeaders body
 
 
-lightTemplate :: ( ToMessage (HSX.XML m)
+lightTemplate :: ( ToMessage (HSX.XMLType m)
                  , XMLGenerator m
                  , EmbedAsAttr m (Attr String (URL m))
                  , MonadRoute m
@@ -151,7 +151,7 @@ twoColumn :: forall (m :: * -> *) c c1 c2 c3.
               EmbedAsChild m c1,
               EmbedAsChild m c3,
               EmbedAsChild m c,
-              EmbedAsChild m (HSX.XML m)) =>
+              EmbedAsChild m (HSX.XMLType m)) =>
              c -> c3 -> c1 -> c2 -> [GenXML m]
 twoColumn header footer left right =
     [<div id="two-column">

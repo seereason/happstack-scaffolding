@@ -140,7 +140,7 @@ rowsToList class' rows
       `mapView` (fmap mconcat $ seqA rows)
 
 rowsToColumn :: (EmbedAsChild x [Char], Monoid b, Functor m, Monad m) =>
-                [Form m i e [GenXML x] b] -> Form m i e [XMLGenT x (HSX.XML x)] b
+                [Form m i e [GenXML x] b] -> Form m i e [XMLGenT x (HSX.XMLType x)] b
 rowsToColumn [] = view [<span>(none)</span>] *> pure mempty
 rowsToColumn rows = (mconcat . intersperse [<hr/>]) `mapView` (fmap mconcat $ seqA rows)
 

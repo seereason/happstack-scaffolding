@@ -22,7 +22,7 @@ import Web.Routes.Happstack          (seeOtherURL)
 import Web.Routes.RouteT (MonadRoute, URL)
 
 handle :: (Happstack m, MonadRoute m, MonadIO m, MonadUserName m, MonadRender m, HasAppConf m, MkURL.MkURL (URL m),
-           EmbedAsAttr m (Attr String (URL m)), ToMessage (HSX.XML m)) =>
+           EmbedAsAttr m (Attr String (URL m)), ToMessage (HSX.XMLType m)) =>
           Text -> MkURL.URL -> m Response
 handle postCreateURL url =
     case url of
