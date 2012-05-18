@@ -54,6 +54,7 @@ Library
                    base,
                    binary,
                    blaze-html,
+                   blaze-markup,
                    bytestring,
                    containers,
                    digestive-functors,
