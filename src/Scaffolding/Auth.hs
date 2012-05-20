@@ -29,7 +29,7 @@ import qualified Scaffolding.ProfileData.Parts as ProfileData
 import qualified Scaffolding.MkURL as MkURL
 import Scaffolding.ProfileData.User (MonadUser, MonadUserName, askAcidAuth, askAcidProfileData, lookMaybeUserId)
 import Scaffolding.MkURL (MkURL)
-import Text.Blaze (Html)
+import Text.Blaze.Html (Html)
 import Text.Blaze.Renderer.String (renderHtml)
 import Web.Routes (MonadRoute(askRouteFn), RouteT(unRouteT), nestURL, showURL)
 import Web.Routes.Happstack (seeOtherURL)

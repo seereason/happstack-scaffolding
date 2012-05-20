@@ -53,7 +53,7 @@ Library
                    acid-state >= 0.6,
                    base,
                    binary,
-                   blaze-html,
+                   blaze-html >= 0.5,
                    blaze-markup,
                    bytestring,
                    containers,
