@@ -82,7 +82,7 @@ opts appName appUACCT =
                             _ <- char ','
                             spaces
                             appSecret <- many1 alphaNum
-                            return (Credentials (encodeUtf8 (pack appName)) (encodeUtf8 (pack appId)) (encodeUtf8 (pack appSecret)))
+                            return (Credentials (pack appName) (pack appId) (pack appSecret))
                  in case parse p h h of
                       (Left e) -> error $ "AppConf: " ++ show e
                       (Right f) -> \c -> c { facebook = Just f }
