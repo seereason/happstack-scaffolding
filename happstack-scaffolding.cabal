@@ -65,7 +65,6 @@ Library
                    fgl,
                    filepath,
                    happstack-authenticate >= 0.7.5,
-                   happstack-data >= 0.5,
                    happstack-hsp,
                    happstack-search,
                    ixset,
