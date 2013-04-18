@@ -1,5 +1,5 @@
 Name:             happstack-scaffolding
-Version:          0.26
+Version:          0.26.1
 License:          AllRightsReserved
 Copyright:        (c) 2010-2011, SeeReason Partners LLC
 Author:           SeeReason Partners <partners@seereason.com>
@@ -69,7 +69,6 @@ Library
                    happstack-search,
                    ixset,
                    happstack-server,
-                   happstack-util, 
                    harp,
                    HJavaScript,
                    HJScript,
