@@ -1,7 +1,7 @@
 -- | Information which controls the overall appearance of the
 -- | application.  (Suggest renaming Pages.AppTemplate -> Theme).
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, PackageImports, RankNTypes, ScopedTypeVariables,
-             TypeFamilies, UndecidableInstances, OverloadedStrings #-}
+             TypeFamilies, UndecidableInstances #-}
 {-# OPTIONS -Wwarn -F -pgmFhsx2hs -fno-warn-orphans -fno-warn-name-shadowing #-}
 module Scaffolding.Pages.AppTemplate
     ( MonadRender
@@ -39,6 +39,7 @@ class (Functor x,
 --       EmbedAsChild x (Block ()),
        EmbedAsChild x T.Text,
        EmbedAsChild x XML,
+       EmbedAsChild x [XML],
        EmbedAsChild x (),
        EmbedAsAttr x (Attr String T.Text),
 --       EmbedAsAttr x (Attr String Id),
@@ -56,6 +57,7 @@ template :: (HasAppConf m,
              EmbedAsAttr m (Attr TL.Text (URL m)),
              EmbedAsChild m headers,
              EmbedAsChild m XML,
+             EmbedAsChild m [XML],
 --             EmbedAsChild m (Block ()),
              EmbedAsChild m body,
              MonadWriter [XML] m,
@@ -77,6 +79,7 @@ template' :: ( Happstack m
              , EmbedAsChild m headers
 --             , EmbedAsChild m (Block ())
              , EmbedAsChild m XML
+             , EmbedAsChild m [XML]
              , EmbedAsAttr m (Attr TL.Text (URL m))
              , StringType m ~ TL.Text
              ) =>
@@ -101,6 +104,7 @@ lightTemplate :: ( ToMessage (XMLType m)
                  , EmbedAsChild m extraHeaders
                  , EmbedAsChild m body
 --                 , EmbedAsChild m (Block ())
+                 , EmbedAsChild m [XML]
                  , EmbedAsChild m XML
                  , StringType m ~ TL.Text
                  ) =>
@@ -124,6 +128,7 @@ lightTemplate' :: ( MonadRoute m
                   , EmbedAsChild m body
 --                  , EmbedAsChild m (Block ())
                   , EmbedAsChild m XML
+                  , EmbedAsChild m [XML]
                   , StringType m ~ TL.Text
                   ) =>
                   Theme m

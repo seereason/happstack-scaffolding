@@ -14,11 +14,11 @@ import System.Exit
 import System.IO
 import System.Posix.Files (fileExist)
 
-trhsxProgram = simpleProgram "trhsx"
+hsx2hsProgram = simpleProgram "hsx2hs"
 
 main :: IO ()
 main = defaultMainWithHooks simpleUserHooks {
-         hookedPrograms = [trhsxProgram]
+         hookedPrograms = [hsx2hsProgram]
        , buildHook = buildHook simpleUserHooks
                      -- Increase cabal verbosity during build to see ghc command line
                      -- { buildHook = \ desc info hooks flags -> (buildHook simpleUserHooks) desc info hooks (flags {buildVerbosity = Flag verbose}) } 
