@@ -1,5 +1,5 @@
-{-# LANGUAGE FlexibleContexts, GeneralizedNewtypeDeriving, PackageImports, RankNTypes, ScopedTypeVariables, StandaloneDeriving, TypeFamilies #-}
-{-# OPTIONS_GHC -F -pgmFtrhsx #-}
+{-# LANGUAGE FlexibleContexts, GeneralizedNewtypeDeriving, PackageImports, RankNTypes, ScopedTypeVariables, StandaloneDeriving, TypeFamilies, OverloadedStrings #-}
+{-# OPTIONS_GHC -F -pgmFhsx2hs #-}
 {-# OPTIONS_GHC -Wall -Wwarn #-}
 module Scaffolding.AppConf
     ( AppConf(..)
@@ -15,11 +15,12 @@ module Scaffolding.AppConf
 
 import Data.Text (Text, pack, empty)
 import Data.Text.Encoding (encodeUtf8)
+import qualified Data.Text.Lazy as TL
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
-import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), asChild, asAttr, genElement)
+import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)
 import HSP.Google.Analytics (UACCT)
-import Language.HJavaScript.Syntax (Block)
+-- import Language.HJavaScript.Syntax (Block)
 import System.Console.GetOpt (ArgDescr(..), ArgOrder(..), OptDescr(..), getOpt, usageInfo)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
@@ -35,7 +36,7 @@ data AppConf
     = AppConf { httpConf   :: Conf
               , baseURI    :: Text
               , top        :: FilePath
-              , static     :: FilePath 
+              , static     :: FilePath
               , logs       :: FilePath
               , favicon    :: FilePath
               , logMode    :: LogMode
@@ -68,7 +69,7 @@ opts appName appUACCT =
        , Option [] ["base-uri"]         (ReqArg (\h -> \c -> c {baseURI = pack h}) "uri") "http://servername:<port>/"
        , Option [] ["no-validate"]      (NoArg (       \c -> c { httpConf = (httpConf c) { validator = Nothing } })) "Turn off HTML validation"
        , Option [] ["top"]              (ReqArg (\h -> \c -> c {top = h}) "PATH") "The top of the directory tree where the app can write files."
-       , Option [] ["static"]           (ReqArg (\h -> \c -> c {static = h}) "PATH") "The directory searched for static files" 
+       , Option [] ["static"]           (ReqArg (\h -> \c -> c {static = h}) "PATH") "The directory searched for static files"
        , Option [] ["logs"]             (ReqArg (\h -> \c -> c {logs = h}) "PATH") "The directory to store log files in"
        , Option [] ["log-mode"]         (ReqArg (\h -> \c -> c {logMode = read h}) (show ([minBound .. maxBound] :: [LogMode]))) "The logging mode to use"
        , Option [] ["enable-analytics"] (NoArg  (      \c -> c { uacct = appUACCT })) "Enable google analytics tracking."
@@ -90,7 +91,7 @@ opts appName appUACCT =
 parseConfig :: [String] -> String -> Maybe UACCT -> Either [String] (AppConf -> AppConf)
 parseConfig args appName appUACCT
     = case getOpt Permute (opts appName appUACCT) args of
-        (flags,_,[]) -> 
+        (flags,_,[]) ->
             let modAppConf = \appConf -> foldr ($) appConf flags
             in Right modAppConf
         (_,_,errs)   -> Left (errs ++ [usageInfo "usage:" (opts appName Nothing)] )
@@ -99,7 +100,9 @@ data MenuItem url = MenuItem String url
 data Menu url = Menu (MenuItem url)
 
 menuBar :: ( XMLGenerator m
-           , EmbedAsAttr m (Attr String a)) =>
+           , EmbedAsAttr m (Attr TL.Text a)
+           , StringType m ~ TL.Text
+           ) =>
            [Menu a] -> GenXML m
 menuBar [] = <div id="menubar"></div>
 menuBar menus =
@@ -109,7 +112,7 @@ menuBar menus =
       </ul>
     </div>
     where
-      mkMenu (Menu (MenuItem name loc)) = <li><a href=loc><% name %></a></li>
+      mkMenu (Menu (MenuItem name loc)) = <li><a href=loc><% TL.pack name %></a></li>
 
 data Theme m
     = Theme

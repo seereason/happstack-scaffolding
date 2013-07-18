@@ -11,15 +11,15 @@ import Control.Applicative  ((<$>))
 import Data.Acid (AcidState)
 import Data.Acid.Advanced (query')
 import Data.Text (Text)
+import qualified Data.Text.Lazy as TL
 import Happstack.Auth.Core.Auth (AuthState)
 import Happstack.Auth.Core.AuthURL (AuthURL(A_Login))
 import Happstack.Auth.Core.Profile (ProfileState)
 import Happstack.Auth.Core.ProfileURL (ProfileURL(P_PickProfile))
 import Happstack.Auth.Blaze.Templates   (handleAuth, handleProfile)
 import Happstack.Server (Happstack, Response, escape, ToMessage)
-import HJScript.Utils ()
+-- ximport HJScript.Utils ()
 import HSP hiding (escape)
-import qualified HSX.XMLGenerator as HSX
 import Scaffolding.AppConf (HasAppConf(askAppConf), AppConf(facebook))
 import Scaffolding.MonadStack.Route (MonadRoute'(liftRoute, unRoute))
 import Scaffolding.Pages.AppTemplate (MonadRender, template)
@@ -39,7 +39,7 @@ import Web.Routes.XMLGenT (unUChild)
 doAuth :: forall m v weburl.
           (URL (m weburl) ~ weburl,
            URL (m AuthURL) ~ AuthURL,
-           HSX.XMLType (m weburl) ~ XML,
+           XMLType (m weburl) ~ XML,
            Happstack (m AuthURL),
            MonadRoute (m AuthURL),
            MonadRoute' weburl v (m weburl),
@@ -50,9 +50,9 @@ doAuth :: forall m v weburl.
            MkURL weburl,
            EmbedAsChild (m weburl) XML,
            MonadRender (m weburl),
-           ToMessage (HSX.XMLType (m weburl)),
+           ToMessage (XMLType (m weburl)),
            Happstack (m weburl),
-           EmbedAsAttr (m weburl) (Attr String weburl),
+           EmbedAsAttr (m weburl) (Attr TL.Text weburl),
            Monad v, Functor v) =>
           Maybe Text -> AuthURL -> m weburl Response
 doAuth realm url =
@@ -71,14 +71,14 @@ doAuth realm url =
 doProfile :: forall m v weburl.
              (URL (m ProfileURL) ~ ProfileURL,
               URL (m weburl) ~ weburl,
-              HSX.XMLType (m weburl) ~ XML,
+              XMLType (m weburl) ~ XML,
               Happstack (m ProfileURL),
               MonadRoute (m ProfileURL),
               EmbedAsChild (m weburl) XML,
-              EmbedAsAttr (m weburl) (Attr String weburl),
+              EmbedAsAttr (m weburl) (Attr TL.Text weburl),
               MonadRender (m weburl),
               HasAppConf (m weburl),
-              ToMessage (HSX.XMLType (m weburl)),
+              ToMessage (XMLType (m weburl)),
               MonadUser (m weburl), MkURL (URL (m weburl)),
               Happstack (m weburl),
               MonadRoute (m weburl),
@@ -103,8 +103,8 @@ doProfileData :: (MkURL.MkURL (URL m),
                   MonadRender m,
                   MonadUserName m,
                   HasAppConf m,
-                  ToMessage (HSX.XMLType m),
-                  EmbedAsAttr m (Attr String (URL m)),
+                  ToMessage (XMLType m),
+                  EmbedAsAttr m (Attr TL.Text (URL m)),
                   MonadRoute m,
                   Happstack m) =>
                  AcidState AuthState
@@ -117,7 +117,7 @@ doProfileData _acidAuth _acidProfile _acidProfileData profileDataURL =
        ProfileData.handle postCreateURL profileDataURL
 
 instance (Functor m, Monad m) => EmbedAsChild (RouteT url m) Html where
-    asChild html = asChild (CDATA False (renderHtml html))
+    asChild html = asChild (CDATA False (TL.pack $ renderHtml html))
 
 requiresRole :: (URL m ~ weburl,
                  MkURL.MkURL (URL m),
@@ -126,14 +126,14 @@ requiresRole :: (URL m ~ weburl,
                  Happstack m,
                  MonadRoute m,
                  HasAppConf m,
-                 EmbedAsAttr m (Attr String weburl),
-                 ToMessage (HSX.XMLType m)) =>
+                 EmbedAsAttr m (Attr TL.Text weburl),
+                 ToMessage (XMLType m)) =>
                 ProfileData.Role -> weburl -> m weburl
 requiresRole role url =
     do mu <- lookMaybeUserId
        case mu of
          Nothing -> escape $ seeOtherURL (MkURL.authURL A_Login)
-         (Just uid) -> 
+         (Just uid) ->
              do apd <- askAcidProfileData
                 r <- query' apd (ProfileData.HasRole uid role)
                 if r
@@ -148,12 +148,12 @@ urlTemplate :: forall headers body authurl weburl v m.
                 MonadRoute' authurl v (m authurl),
                 MonadRender (m weburl),
                 HasAppConf (m weburl),
-                ToMessage (HSX.XMLType (m weburl)),
+                ToMessage (XMLType (m weburl)),
                 MonadUser (m weburl),
                 Happstack (m weburl),
                 MonadRoute (m weburl),
-                EmbedAsAttr (m weburl) (Attr String weburl),
-                EmbedAsAttr (m weburl) (Attr String (URL (m weburl))),
+                EmbedAsAttr (m weburl) (Attr TL.Text weburl),
+                EmbedAsAttr (m weburl) (Attr TL.Text (URL (m weburl))),
                 Monad (m authurl),
                 Monad v,
                 Functor v) =>
@@ -163,8 +163,8 @@ urlTemplate :: forall headers body authurl weburl v m.
             -> headers
             -> m authurl Response
 urlTemplate showFn title headers body =
-    do headersXML <- liftRoute $ map unUChild <$> (unXMLGenT $ asChild headers :: RouteT authurl v [HSX.ChildType (RouteT authurl v)])
-       bodyXML    <- liftRoute $ map unUChild <$> (unXMLGenT $ asChild body    :: RouteT authurl v [HSX.ChildType (RouteT authurl v)])
+    do headersXML <- liftRoute $ map unUChild <$> (unXMLGenT $ asChild headers :: RouteT authurl v [ChildType (RouteT authurl v)])
+       bodyXML    <- liftRoute $ map unUChild <$> (unXMLGenT $ asChild body    :: RouteT authurl v [ChildType (RouteT authurl v)])
        liftRoute' $ unnest showFn $ unRoute $ template' title headersXML bodyXML
     where
       liftRoute' :: RouteT authurl v a -> m authurl a
@@ -173,7 +173,7 @@ urlTemplate showFn title headers body =
       template' = template
 
 unnest :: (url1 -> [(Text, Maybe Text)] -> Text)
-       -> RouteT url1 m a 
+       -> RouteT url1 m a
        -> RouteT url2 m a
 unnest showFn routeSP =
     liftRouteT $ unRouteT routeSP showFn

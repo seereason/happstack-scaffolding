@@ -1,16 +1,16 @@
 -- |Pages which are not part of our core
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, PackageImports, RankNTypes, ScopedTypeVariables, TypeFamilies, NoMonomorphismRestriction #-}
-{-# OPTIONS -Wwarn -F -pgmFtrhsx -fcontext-stack=40 -fno-warn-orphans -fno-warn-name-shadowing #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, PackageImports, RankNTypes, ScopedTypeVariables, TypeFamilies, NoMonomorphismRestriction, OverloadedStrings #-}
+{-# OPTIONS -Wwarn -F -pgmFhsx2hs -fcontext-stack=40 -fno-warn-orphans -fno-warn-name-shadowing #-}
 module Scaffolding.Pages.UnicodeKey
     ( unicodeKeyPage
     ) where
 
 import Data.Generics.SYB.WithClass.Instances ()
+import qualified Data.Text.Lazy as TL
 import Data.List (genericLength, genericSplitAt, unfoldr)
 import Happstack.Server (Happstack, Response, ToMessage)
-import HJScript.Utils ()
+-- import HJScript.Utils ()
 import HSP
-import qualified HSX.XMLGenerator as HSX
 import Prelude hiding (null)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Pages.AppTemplate (MonadRender, template)
@@ -19,20 +19,20 @@ import qualified Scaffolding.Unicode.Render as UR (charsOfInterest)
 import Web.Routes.RouteT (MonadRoute, URL)
 import Web.Routes.XMLGenT ()
 
-unicodeKeyPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr String (URL m)), ToMessage (HSX.XMLType m)) => m Response
+unicodeKeyPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m), StringType m ~ TL.Text) => m Response
 unicodeKeyPage =
     template "Unicode Keys" ([] :: [XML]) text
     where
       text = table tuplesOfInterest'
-      tuplesOfInterest' :: (XMLGenerator x) => [[ GenXML x ]]
+      tuplesOfInterest' :: (XMLGenerator x, StringType x ~ TL.Text) => [[ GenXML x ]]
       tuplesOfInterest' = map (map (spn . fmt)) tuplesOfInterest
           where spn t = <span> <% t %> </span>
-                fmt (s,c) = <table> <tr> <td style="width: 4em"> <% show c %> </td> <td style="width: 1em"> <% (c:[]) %> </td> <td> <% s %> </td> </tr></table>
+                fmt (s,c) = <table> <tr> <td style="width: 4em"> <% TL.pack $ show c %> </td> <td style="width: 1em"> <% TL.singleton c %> </td> <td> <% TL.pack s %> </td> </tr></table>
       tuplesOfInterest :: [[ (String, Char) ]]
       tuplesOfInterest = tablify n $ UR.charsOfInterest
           where n :: Integer
                 n = 200
-      table :: (XMLGenerator x) => [[GenXML x]] -> GenXML x
+      table :: (XMLGenerator x, StringType x ~ TL.Text) => [[GenXML x]] -> GenXML x
       table m =
           t
           where

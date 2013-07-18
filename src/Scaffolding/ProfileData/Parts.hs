@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
-module Scaffolding.ProfileData.Parts 
+module Scaffolding.ProfileData.Parts
        ( handle
        ) where
 
@@ -7,10 +7,10 @@ import Control.Monad.Trans (MonadIO)
 import Data.Acid.Advanced (update', query')
 import Data.Text (Text)
 import qualified Data.Text as Text
+import qualified Data.Text.Lazy as TL
 import Happstack.Auth.Core.Profile  (UserId(..), getUserId)
-import Happstack.Server 
-import HSP (EmbedAsAttr, Attr)
-import qualified HSX.XMLGenerator as HSX
+import Happstack.Server
+import HSP (EmbedAsAttr, Attr, XMLType)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Pages.AppTemplate (MonadRender)
 import qualified Scaffolding.ProfileData.Acid as ProfileData
@@ -22,7 +22,7 @@ import Web.Routes.Happstack          (seeOtherURL)
 import Web.Routes.RouteT (MonadRoute, URL)
 
 handle :: (Happstack m, MonadRoute m, MonadIO m, MonadUserName m, MonadRender m, HasAppConf m, MkURL.MkURL (URL m),
-           EmbedAsAttr m (Attr String (URL m)), ToMessage (HSX.XMLType m)) =>
+           EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) =>
           Text -> MkURL.URL -> m Response
 handle postCreateURL url =
     case url of

@@ -1,6 +1,6 @@
 {-# LANGUAGE EmptyDataDecls, FlexibleContexts, FlexibleInstances, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses,
              OverlappingInstances, PackageImports, RankNTypes, ScopedTypeVariables, TypeSynonymInstances, UndecidableInstances, TypeFamilies #-}
-{-# OPTIONS -F -pgmFtrhsx -Wwarn -fno-warn-orphans -fno-warn-name-shadowing -fno-warn-unused-matches #-}
+{-# OPTIONS -F -pgmFhsx2hs -Wwarn -fno-warn-orphans -fno-warn-name-shadowing -fno-warn-unused-matches #-}
 module Scaffolding.HSP.Widget where
 
 import Control.Applicative ((<$>))
@@ -8,21 +8,24 @@ import Control.Monad ({-liftM-})
 import Control.Monad.RWS (RWS, runRWS, mapRWS)
 import Control.Monad.State (MonadState (get, put))
 import Control.Monad.Writer (tell)
-import "mtl" Control.Monad.Identity (Identity)
+import "mtl" Control.Monad.Identity (Identity(runIdentity))
 import Data.Maybe (fromMaybe)
 --import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import HSP.Identity
-import HSP hiding (onClick)
-import HJScript -- (Array(Array), Args, Exp(..), HJScript, IsClass, JBool, JObject, JString, JType, ( # ), call, callProc, callMethod, callVoidMethod, evalHJScript, false, function, functionDecl, inVar, new, push, string, this)
-import HJScript.DOM ({-alert, document, window-})
+import qualified Data.Text.Lazy as TL
+import HSP.Monad
+import HSP.XMLGenerator hiding (onClick)
+import HSP.HTML4 (renderAsHTML)
+import qualified HSP.XML as HSP
+import HJScript (HJScript'(..), JShow, HasConstructor, Array(Array), Args, Exp(..), HJScript, IsClass, JBool, JInt, JObject(..), JString, JType, Var, Object(..), Rec(..), ( # ), (#!), (.=.), (.-.), (.+.), (?), (.==.), first, second, call, callProc, callMethod, callVoidMethod, evalHJScript, false, function, functionDecl, inVar, jShow, new, push, string, this, derefVar, procedureDecl, val, postinc, int, varWith, propertyVar, forIn, arrLength, delete, procedure, deref, true, false, foreach, for, outputBlock, jshow, runHJScript, doIfNoElse)
+-- import HJScript.DOM ({-alert, document, window-})
+import HJScript.XMLGenerator (fromStringLit)
 import HJScript.DOM hiding (Object, Form)
 --import HJScript.Lang (doIf)
 import HJScript.Objects.JQuery (JQuery, append, jSetText, jVal, selectExpr, runExp)
-import qualified HSX.XMLGenerator as HSX
+-- import qualified XMLGenerator as HSX
 import Happstack.Server (ServerPartT)
 import HSP.ServerPartT ()
-import HSP.Identity ({-evalIdentity-})
 import Scaffolding.HJScriptExtra
 import Scaffolding.MonadStack.Headers (MonadHeaders, tellHeaders)
 import Text.JSON (JSON, Result(Ok, Error), decode {-, encode-})
@@ -30,24 +33,24 @@ import Text.Digestive (Form, transform, transformEither, mapView)
 import Text.Digestive.Forms (FormInput, inputString)
 
 class (XMLGenerator x,
-       HSX.XMLGen x,
-       HSX.SetAttr x (HSX.XMLType x),
-       HSX.AppendChild x (HSX.XMLType x),
-       HSX.EmbedAsChild x String,
-       HSX.EmbedAsChild x Text,
-       HSX.EmbedAsChild x Char,
-       HSX.EmbedAsAttr x (HSX.Attr String String),
-       HSX.EmbedAsAttr x (HSX.Attr String Int),
-       HSX.EmbedAsAttr x (HSX.Attr String Bool),
-       HSX.EmbedAsChild x XML,
+       XMLGen x,
+       SetAttr x (XMLType x),
+       AppendChild x (XMLType x),
+       EmbedAsChild x String,
+       EmbedAsChild x Text,
+       EmbedAsChild x Char,
+       EmbedAsAttr x (Attr String String),
+       EmbedAsAttr x (Attr String Int),
+       EmbedAsAttr x (Attr String Bool),
+       EmbedAsChild x HSP.XML,
        MonadHeaders IO x,
-       EmbedAsAttr x (Attr String Text),
+       StringType x ~ String,
        Widgets x) => WidgetGenerator x
 
 -- this is pretty wacky
-flattenForm :: (Functor m, Monad m, MonadHeaders IO x) => Form m i e ([HJScript ()], [XMLGenT x (HSX.XMLType x)]) a -> Form m i e [XMLGenT x (HSX.XMLType x)] a
-flattenForm = 
-    mapView $ \(js, h:hs) -> 
+flattenForm :: (Functor m, Monad m, MonadHeaders IO x) => Form m i e ([HJScript ()], [XMLGenT x (XMLType x)]) a -> Form m i e [XMLGenT x (XMLType x)] a
+flattenForm =
+    mapView $ \(js, h:hs) ->
         (tellHeaders [onReadyXML' js] >> h) : hs
 
 {-
@@ -120,7 +123,7 @@ data Id     = Id { idSrc :: Src
                  , unId :: Exp Int }
             | GenId JString
 
-instance Show Id where              
+instance Show Id where
     show (Id src prefix (JInt i)) = show src ++ "_" ++ (escape prefix) ++ "_" ++ show i -- this can fail sometimes, because, Exp Int could be something besides a (JInt 1) literal.
         where escape [] = []
               escape ('[' : cs) = '_' : escape cs
@@ -147,13 +150,13 @@ instance JShow Id where
 
 instance EmbedAsAttr (ServerPartT IO) (Attr String Id) where
   asAttr (n := i) = asAttr (n := show i)
-
+{-
 instance EmbedAsAttr Identity (Attr String Id) where
   asAttr (n := i) = asAttr (n := show i)
-  
+
 instance EmbedAsAttr Identity (Attr String (In a)) where
   asAttr (n := i) = asAttr (n := show (getId i))
-
+-}
 class GetId a where
   getId :: a -> Id
 
@@ -172,14 +175,13 @@ This is the core type used by the widget system. It is a simple wrapper around t
 
 The reader environment is currently unused.
 
-The writer portion hold the tuple, ([HJScript ()],[XMLGenT m (HSX.XMLType
+The writer portion hold the tuple, ([HJScript ()],[XMLGenT m (XMLType
 m)]). The first argument is javascript code that needs to be added to
 the onReady() function. The second argument is an html generated by
 the widget.
-
 The state widget is the tuple (Id, Int). The Id is used to generate
 fresh ids in Haskell land. The Int argument is used by hjscript to
-generate fresh variable names. 
+generate fresh variable names.
 
 -}
 
@@ -187,38 +189,38 @@ newtype Widget m a =
   Widget { unWidget :: RWS () ([HJScript ()],[GenXML m]) (Id, Int) a }
   deriving (Functor, Monad, MonadState (Id, Int))
 
--- This is just a 'class alias' so that we can have short type signatures           
-class (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), (NextId (Widget m))) => Widgets m
-instance Widgets Identity
+-- This is just a 'class alias' so that we can have short type signatures
+class (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), (NextId (Widget m)), StringType m ~ String) => Widgets m
+-- instance Widgets Identity
 instance Widgets HJScript'
-instance Widgets (ServerPartT IO)
+-- instance Widgets (ServerPartT IO)
 
 -- | run a 'Widget' and get back the javascript and html it produces
 runWidget :: String -> Int -> Widget m a -> (a, ([HJScript ()],[GenXML m]))
 runWidget prefix i (Widget rws) =
   let (a, _s, w) = runRWS rws () (Id Haskell prefix (int i), i)
   in (a, w)
-     
+
 
 --  lift 'mapRWS' to the 'Widget' monad
-mapWidget :: ((a, (Id, Int), ([HJScript ()], [GenXML m])) -> (b, (Id, Int), ([HJScript ()], [XMLGenT n (HSX.XMLType n)]))) -> 
+mapWidget :: ((a, (Id, Int), ([HJScript ()], [GenXML m])) -> (b, (Id, Int), ([HJScript ()], [XMLGenT n (XMLType n)]))) ->
              Widget m a ->
              Widget n b
 mapWidget f (Widget w) = Widget $ mapRWS f w
 
-
+{-
 -- | debug tool. show the html+javascript generated by the Widget
 showWidget :: Widget Identity a -> String
-showWidget widget = 
+showWidget widget =
   let (_a, (js, xml)) = runWidget "prefix" 0 widget
-      xmlStr = unlines $ map renderAsHTML (map evalIdentity xml)
+      xmlStr = unlines $ map (TL.unpack . renderAsHTML) (map (runIdentity . unXMLGenT) xml)
       jsStr = unlines (map (show . snd . evalHJScript) js)
   in jsStr ++ xmlStr
 
 -- | debug tool. calls 'showWidget' and does 'putStrLn' on the 'String' it return
 printWidget :: Widget Identity a -> IO ()
-printWidget = putStrLn . showWidget     
-
+printWidget = putStrLn . showWidget
+-}
 
 -- | turn some html into a 'Widget'
 html ::  GenXML m -> Widget m ()
@@ -228,7 +230,7 @@ html xml =
 -- | turn some javascript into a 'Widget'
 js :: HJScript a -> Widget m a
 js hjs =
-  Widget $ do (i, hjstate) <- get 
+  Widget $ do (i, hjstate) <- get
               let (t, hjstate', block) = runHJScript hjs hjstate
               put (i, hjstate')
               tell ([outputBlock block], [])
@@ -243,14 +245,14 @@ plugW f = Widget . (mapRWS $ \(a, s, (js, xml)) -> (a, s, (js, f xml))) . unWidg
 -- not quite sure if this is useful
 class NextId m where
   nextId :: m Id
-  
-instance NextId (Widget Identity) where  
+
+instance NextId (Widget Identity) where
   nextId = nextId'
-  
-instance NextId (Widget (ServerPartT IO)) where  
-  nextId = nextId'  
-  
-instance NextId (Widget HJScript') where  
+
+instance NextId (Widget (ServerPartT IO)) where
+  nextId = nextId'
+
+instance NextId (Widget HJScript') where
   nextId =
     js $ do v <- inVar jNextId
             return (Id Javascript "js" v)
@@ -258,7 +260,7 @@ instance NextId (Widget HJScript') where
 
 -- | 'Widget' which returns the next unused Haskell Id
 nextId' :: Widget m Id
-nextId' = 
+nextId' =
   do (v@(Id Haskell prefix (JInt i)), hjstate) <- get
      put (Id Haskell prefix (JInt (succ i)), hjstate)
      return v
@@ -271,20 +273,20 @@ jNextId = call (JConst "nextId") ()
 -- Id that we can use in the Haskell code.. provided we don't try to
 -- actually find the number associated with the Id.
 jNextId' :: HJScript (Id, Exp Int)
-jNextId' = 
+jNextId' =
   do v <- inVar jNextId
      return (Id Javascript "js" v, v)
-{-     
+{-
 nextId' :: Widget m Id
 nextId' =
   do i <- js $ return jNextId
      return (Id i)
--}   
+-}
 
 -- * Widget things
 
 -- | get the element (as a JQuery object) which has the specified Id
-selectId :: (GetId i) => i -> JObject JQuery     
+selectId :: (GetId i) => i -> JObject JQuery
 selectId i   = selectExpr (string $ ("#" ++ show (getId i)))
 
 
@@ -312,7 +314,7 @@ bindId iId callback =
   do cb <- function callback
      runExp $ selectExpr (document) # bind (id2event (getId iId), cb)
      return ()
-     
+
 -- | connect a widget output to a widget input specifically, when the
 -- 'Widget' providing 'Out a' calls 'sendMsg', that message should be
 -- delivered to the 'Widget' which providse 'In a'.
@@ -345,7 +347,7 @@ jResend out1 (Out out2) = jConnect out1 (In out2)
 jReRecv :: forall a. (JType a, Show a) => (In a) -> (In a) -> HJScript ()
 jReRecv (In in1) in2 = jConnect (Out in1) in2
 
--- | disconnect to 'Widgets'. Can be called from javascript.          
+-- | disconnect to 'Widgets'. Can be called from javascript.
 jDisconnect :: (Out a) -> (In a) -> HJScript ()
 jDisconnect (Out oId) (In (Id src prefix i)) =
   runExp $ selectExpr (document) # unbind (id2event oId .+. (string ".") .+. string (show src ++ "_") .+. (string $ prefix ++ "_") .+. (jShow i))
@@ -381,7 +383,7 @@ widgetMap f oIda =
     do (iIda, oIdb) <- widgetMap_ f
        connect oIda iIda
        return oIdb
-    
+
 
 
 -- | this 'Widget' listens to multiple 'Widgets' and copies a message
@@ -403,7 +405,7 @@ mergeOuts outs =
 -- * Some Widgets
 
 -- | create a 'submit' button
--- 
+--
 -- The argument is the label to show in the button. It will also be
 -- the String in the Out message.
 submit :: (Widgets m) => String -> Widget m (Out String)
@@ -418,8 +420,8 @@ submit val =
              runExp $ selectId (getId oId) # click clickCB
      return oId
 
--- | create a dropdown menu. 
--- 
+-- | create a dropdown menu.
+--
 -- The first argument of the tuple is the
 -- label to show in the dropdown. The second argument is the message
 -- to send when the item is selected.
@@ -434,7 +436,7 @@ select title vals =
              runExp $ jEmpty # jSetData ("val", string "")
              runExp $ selectElem # append empty
              -- remaining elements
-             let optionElem (lbl, val) = 
+             let optionElem (lbl, val) =
                      do e <- <option><% lbl %></option>
                         j <- inVar $ selectExpr e
                         runExp $ j # jSetData ("val", val)
@@ -456,7 +458,7 @@ input' :: (XMLGenerator m, Functor m, NextId (Widget m))
           => (Id -> GenXML m) -- ^ takes a unique id and generates the HTML
           -> (Id -> HJScript (Exp (() -> String))) -- ^ takes the same unique id and returns a javascript function which can be used to extract the string value of the widget
           -> Widget m (In String, Out String)
-input' genHtml getString = 
+input' genHtml getString =
   do iId <- In  <$> nextId
      oId <- Out <$> nextId
      html $ genHtml (getId iId)
@@ -468,7 +470,7 @@ input' genHtml getString =
 
 -- | a text input field widget
 -- TODO: pressing enter should submit widget ?
-input :: (NextId (Widget m), XMLGenerator m, Functor m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String a))
+input :: (NextId (Widget m), XMLGenerator m, Functor m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), EmbedAsAttr m (Attr String a), StringType m ~ String)
          => a -- ^ initial value of the text field
          -> Widget m (In String, Out String)
 input v =
@@ -479,7 +481,7 @@ input v =
                return (e # jVal))
 
 -- | a text area widget
-textarea :: (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsChild m a, NextId (Widget m))
+textarea :: (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsChild m a, NextId (Widget m), StringType m ~ String)
             => a  -- ^ initial value of the text field
             -> Widget m (In String, Out String)
 textarea v =
@@ -491,7 +493,7 @@ textarea v =
 
 
 -- | A Widget which receives a message and shows it in a popup box (i.e, window.alert(msg)).
-eventAlert :: forall a m. (JType a, JShow a, NextId (Widget m)) => Widget m (In a)          
+eventAlert :: forall a m. (JType a, JShow a, NextId (Widget m)) => Widget m (In a)
 eventAlert =
   do i <- nextId
      js $ do popup <- function $ \(event :: Exp JEvent, msg :: Exp a) ->
@@ -501,7 +503,7 @@ eventAlert =
      return (In i)
 
 -- | A widget which listens for a message and writes a string representation of it to a <p> tag.
-output :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => Widget m (In a)
+output :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => Widget m (In a)
 output =
   do i <- In <$> nextId
      html $ <p id=(getId i) />
@@ -534,7 +536,7 @@ jInput' =
     do (jid, jidVal) <- jNextId'
        e <- <input type="text" id=jid value=str />
        changeCB <- function $ \(jEvent :: JObject JEvent) ->
-         do sendMsg (Out jid) ((selectExpr e) # jAttr "value") 
+         do sendMsg (Out jid) ((selectExpr e) # jAttr "value")
             return false
        runExp $ selectExpr(e) # change changeCB
        new JWidget (e, jidVal)
@@ -543,7 +545,7 @@ jInput' =
 jInput :: Exp (String -> JWidget (Out String))
 jInput = JConst "jInput"
 
--- | a text input field 'JWidget'      
+-- | a text input field 'JWidget'
 jSubmit :: Exp (String -> JWidget (Out String))
 jSubmit = JConst "jSubmit"
 
@@ -564,7 +566,7 @@ msg     = deref "msg"
 
 -- | creates a single word which can be toggled on/off
 -- instead of sticking (bool, string) in an array, should we have a toggle object?
-toggleWord :: forall a m. (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => String -> JInt -> Widget m (In (JToggle Int), Out (JToggle (Rec Int String)))
+toggleWord :: forall a m. (XMLGenerator m, EmbedAsChild m String, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => String -> JInt -> Widget m (In (JToggle Int), Out (JToggle (Rec Int String)))
 toggleWord txt value =
   do oId <- nextId
      iId <- nextId
@@ -625,7 +627,7 @@ returned when it is clicked.
 
 
 -}
-paragraphWidget :: (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => [String] -> Widget m ((In (Array Int)), Out (JToggle (Rec Int String)))
+paragraphWidget :: (XMLGenerator m, EmbedAsChild m String, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => [String] -> Widget m ((In (Array Int)), Out (JToggle (Rec Int String)))
 paragraphWidget words =
   do iId <- In <$> nextId
      pId <- nextId
@@ -656,7 +658,8 @@ paragraphWidget words =
 -- at the moment.
 --
 -- This function is obsolete.
-dynListWidget :: (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => Widget m (In ElementNode)
+{-
+dynListWidget :: (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => Widget m (In ElementNode)
 dynListWidget =
   do iId  <- In <$> nextId
      ulId <- nextId
@@ -668,7 +671,7 @@ dynListWidget =
                        return false
                   <ol id=ulId class="dynList" />
      return iId
-
+-}
 -- | A 'widget' which listens for a 'String' and sends an <li> element which contains that string
 listItem :: (XMLGenerator m, NextId (Widget m)) => Widget m (In String, Out ElementNode)
 listItem =
@@ -683,15 +686,15 @@ listItem =
 -- | a 'Widget' which listens for incoming 'JWidget's which output
 -- Strings. It adds these JWidgets to a list, and resends theirs
 -- outputs to its output.
-widgetList :: (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => Widget m (In (JWidget (Out String)), Out String)
+widgetList :: (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => Widget m (In (JWidget (Out String)), Out String)
 widgetList =
   do iId <- In  <$> nextId
      oId <- Out <$> nextId
      html $ <ol id=(getId iId)></ol>
      js $ do bindId iId $ \(event, jwidget :: Exp (JWidget (Out String))) ->
                do e <- inVar $ selectId iId
-                  d <- <input type="submit" value="x" />                  
-                  li <- <li><% (jwidget # deref "xml" :: Exp ElementNode) %><% d %></li>                       
+                  d <- <input type="submit" value="x" />
+                  li <- <li><% (jwidget # deref "xml" :: Exp ElementNode) %><% d %></li>
                   jid <- inVar $ (jwidget # deref "id")
                   runExp $ e # append li
                   deleteCB <- function $ \(jEvent :: JObject JEvent) ->
@@ -699,13 +702,13 @@ widgetList =
                        return false
                   runExp $ selectExpr d # click deleteCB
 --                  callProc (jwidget # deref "init") ()
-                  -- connect the inner and out widgets                  
+                  -- connect the inner and out widgets
                   jResend (Out (Id Javascript "js" jid) :: Out String) oId
                   return false
      return (iId, oId)
 
 -- | similar to 'widgetList' except that instead of merging the outputs, it outputs an array containing the last message sent by each element of the list.
-widgetList3 :: forall m a. (Show a, JType a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => Widget m (In (JWidget (Out a)), Out (Array a))
+widgetList3 :: forall m a. (Show a, JType a, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => Widget m (In (JWidget (Out a)), Out (Array a))
 widgetList3 =
   do iId      <- In  <$> nextId
      oId      <- Out <$> nextId
@@ -720,7 +723,7 @@ widgetList3 =
                                          arr # push (selectExpr (string "#" .+. liId) # jData "msg")
                                   -- window # alert arr
                                   return arr
-             sortUpdateCB <- function $ \(event :: JObject JEvent) -> 
+             sortUpdateCB <- function $ \(event :: JObject JEvent) ->
                                     do sendMsg oId (call toArrayFn ())
                                        return true
              runExp $ (selectExpr ol) # bind ("sortupdate", sortUpdateCB)
@@ -749,12 +752,12 @@ widgetList3 =
                   jConnect (Out (Id Javascript "js" jid) :: Out a) (In updateId)
                   runExp $ (selectExpr xml) # change_
                   runExp $ selectExpr (string "#Javascript_" .+. jShow jid) # change_ -- FIXME: this only works if the widget produces an output when change is triggered
-                  return false                  
+                  return false
      return (iId, oId)
 
 
 -- | similar to 'widgetList', but designed to work with 'JToggle' stuff
-widgetList2 :: forall a m. (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => Widget m (In (JToggle (Rec Int a)), In (JWidget (In (JToggle (Rec Int a)), Out (Array Int))), Out (Array Int))
+widgetList2 :: forall a m. (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => Widget m (In (JToggle (Rec Int a)), In (JWidget (In (JToggle (Rec Int a)), Out (Array Int))), Out (Array Int))
 widgetList2 =
   do iId <- In  <$> nextId
      wId <- In  <$> nextId
@@ -762,7 +765,7 @@ widgetList2 =
      html $ <ol id=(getId iId)></ol>
      js $ do bindId wId $ \(event, jwidget) -> --  :: Exp (JWidget (In (JToggle (Rec Int a))))) ->
                do e <- inVar $ selectId iId
-                  d <- <input type="submit" class="delete" value="x" />                  
+                  d <- <input type="submit" class="delete" value="x" />
                   liElem <- <li class="clickable"><% d %><% (jwidget # deref "xml" :: Exp ElementNode) %></li>
                   jid <- inVar $ (jwidget # deref "id")
                   jOidVal <- inVar $ (jwidget # deref "oid")
@@ -805,10 +808,10 @@ widgetList2 =
                   return false
 {-
              bindId iId $ \(event, jtoggle :: Exp (JToggle (Rec Int a))) ->
-               do 
+               do
                   return false
 -}
-     return (iId, wId, oId)     
+     return (iId, wId, oId)
 
 -- | a 'Widget' which listens for incoming 'Strings' and outputs JWidgets which contain the string and which send the send which clicked.
 itemFactoryWidget :: (NextId (Widget m)) => Widget m (In String, Out (JWidget (Out String)))
@@ -848,7 +851,7 @@ constructor' make =
                   return false
      return (iId, oId)
 
--- | similar to constructor' except the JWidget does not depend on the value of the input argument     
+-- | similar to constructor' except the JWidget does not depend on the value of the input argument
 constructor0 :: (NextId (Widget m)) => Exp (() -> JWidget a) -> Widget m (In String, Out (JWidget a))
 constructor0 make =
   do iId <- In  <$> nextId
@@ -856,9 +859,9 @@ constructor0 make =
      js $ do bindId iId $ \(event, str :: JString) ->
                do sendMsg oId (call make ())
                   return false
-     return (iId, oId)     
+     return (iId, oId)
 
--- | a wrapper around constructor'. Perhaps not a very useful one. Should at least be parameterized around 'a' instead of 'String'.          
+-- | a wrapper around constructor'. Perhaps not a very useful one. Should at least be parameterized around 'a' instead of 'String'.
 constructor :: (NextId (Widget m)) => (JString -> HJScript (Exp (JWidget (Out String)))) -> Widget m (In String, Out (JWidget (Out String)))
 constructor make =
   do fn <- js $ function make
@@ -867,7 +870,7 @@ constructor make =
 -- Another set of functions for a widget similar to paragraphWidget
 
 -- A widget which receives a message and shows it in a paragraph tag
-outputToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => Widget m (In (JToggle (Rec Int a)))
+outputToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => Widget m (In (JToggle (Rec Int a)))
 outputToggle =
   do i <- In <$> nextId
      html $ <p id=(getId i) />
@@ -883,9 +886,9 @@ outputToggle =
              runExp $ e # jSetData ("words", words)
              runExp $ selectExpr(document) # bind (id2event i, callback)
      return i
-     
+
 -- A widget which receives a message and shows it in a paragraph tag
-outputMultiToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => Widget m (In (JToggle (Rec Int a)))
+outputMultiToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => Widget m (In (JToggle (Rec Int a)))
 outputMultiToggle =
   do i <- In <$> nextId
      html $ <p class="subjects" id=(getId i) />
@@ -934,8 +937,8 @@ jOutputMultiToggle = function $ \() ->
      w # derefVar "oid" .=. oIdVal
      w # derefVar "iid" .=. iIdVal
      return w
-     
-     
+
+
 -- jOutputMultiToggle :: (JShow a) => Exp (JWidget (In (JToggle (Rec Int a))))
 -- jOutputMultiToggle = JConst "jOutputMultiToggle"
 
@@ -993,14 +996,14 @@ orderedAssoc =
             do ks <- inVar $ oaThis # keys ()
                vs <- inVar $ val (oaThis # values)
                arr <- new Array ()
-               for (int 0) ((arrLength ks) .-. int 1) $ \i -> 
+               for (int 0) ((arrLength ks) .-. int 1) $ \i ->
                  do arr # push (val (vs # (propertyVar (val (ks #! i) :: JInt))))
                return arr
           oaThis # derefVar "sortedValues" .=. sortedFn
           return ()
     where
       oaThis :: JObject OrderedAssoc
-      oaThis = this 
+      oaThis = this
 
 -- | some javascript widget init code. This must go in your <head> for Widgets to work.
 initWidgets :: HJScript ()
@@ -1022,33 +1025,33 @@ initWidgets =
      currId <- varWith (int 0)
      functionDecl "nextId" $ \() ->
        do postinc currId
-          return (val currId)          
+          return (val currId)
      return ()
 
 
 -- | helper function which turns javascript into a <script> tag that calls the javascript via $(document).ready().
-onReadyXML :: (XMLGenerator m) => [HJScript ()] -> GenXML m
+onReadyXML :: (XMLGenerator m, StringType m ~ TL.Text) => [HJScript ()] -> GenXML m
 onReadyXML onReadyJs =
+  let fromStringLit = HSP.fromStringLit in
   <script type="text/javascript">
     $(document).ready(function () {
-      <% unlines $ map (show . snd . evalHJScript) onReadyJs %> 
+      <% TL.pack $ unlines $ map (show . snd . evalHJScript) onReadyJs %>
     });
   </script>
 
 -- | helper function which turns javascript into a <script> tag that calls the javascript via $(document).ready().
 --
 -- calls 'onReadyXML' but has a pure return value.
-onReadyXML' :: [HJScript ()] -> XML
-onReadyXML' = evalIdentity . onReadyXML
-
+onReadyXML' :: [HJScript ()] -> HSP.XML
+onReadyXML' = runIdentity . (unHSPT :: HSPT HSP.XML Identity HSP.XML -> Identity HSP.XML) . unXMLGenT . onReadyXML
 
 -- | Writes the output of a 'Widget' to a hidden input field. This is
 -- useful if you want to use a Widget in an html form, since you need
 -- a way to get the output of the widget into the form data.
-sink :: forall a m. (JType a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m)) => String -> String -> Widget m (In a)
+sink :: forall a m. (JType a, XMLGenerator m, EmbedAsAttr m (Attr String String), EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => String -> String -> Widget m (In a)
 sink n v =
   do i <- In <$> nextId
-     html $ <input type="hidden" name=n  id=(getId i) value=v />
+     html $ <input type="hidden" name=(n)  id=(getId i) value=(v) />
      js $ do bindId i $ \(event, str :: Exp a) ->
                do e <- inVar $ selectId i
 --                  window # alert (stringify str)
@@ -1070,12 +1073,14 @@ instance (JSONCast a) => JSONCast (Array a) where
 
 
 -- | turn a 'Widget' into formlet.
-widgetToForm :: 
+widgetToForm ::
     ( XMLGenerator m
+    , StringType m ~ String
     , Functor v
     , Monad v
     , FormInput i f
     , EmbedAsAttr m (Attr String Id)
+    , EmbedAsAttr m (Attr String String)
     , NextId (Widget m)
     , Functor m
     , Monad m
@@ -1085,7 +1090,7 @@ widgetToForm ::
     , JType a
     , JSONCast a) => String -> Widget m (In String, Out a) -> Form v i  [String] ([HJScript ()],[GenXML m]) (AsHaskell a)
 widgetToForm prefix widget =
-    (inputString (\n mv -> snd $ runWidget (prefix ++ show n) 0 $ 
+    (inputString (\n mv -> snd $ runWidget (prefix ++ show n) 0 $
                            do -- js $ window # alert (string "init widget")
                               let v = fromMaybe "" mv
                               (initId, oId) <- widget
@@ -1100,7 +1105,7 @@ widgetToForm prefix widget =
                                           (Error eStr) -> Left [eStr ++": " ++ str])
 
 {-
-widgetToForm :: 
+widgetToForm ::
     ( XMLGenerator m
     , EmbedAsAttr m (Attr String Id)
     , NextId (Widget m)
@@ -1142,19 +1147,19 @@ class Show e => Args e t | e -> t where
 
 -}
 
-{-     
+{-
 addEvent :: Exp (a -> Bool) -> Widget m (Out a)
-addEvent handler = 
+addEvent handler =
   do i <- nextId
      js $ runExp $ selectExpr(document) # bind ("sendMsg_" ++ show (unId i), handler)
      return (Out i)
 -}
-     
+
 {-
      js $ do msgFn <- function $ \() ->
                do return false
              clickFn <- function $ \(jEvent :: JObject JEvent) ->
-               do args <- new Array () 
+               do args <- new Array ()
                   runExp $ selectExpr(jThis) # triggerHandler ("sendMsg", (args :: Exp (Array Trigger)))
                   return false
              e <- inVar (selectId i)
@@ -1162,17 +1167,17 @@ addEvent handler =
              runExp $ e # click clickFn
 -}
 
-     
-{-                                  
-     js $ do fn <- objectVal 
+
+{-
+     js $ do fn <- objectVal
              bindSendText (i, fn)
              fn <- function $ \jObj ->
                do jObj # trigger "sendText"
              bindRecvTrigger (i, fn)
--}     
-{-     
-     
-{-                  
+-}
+{-
+
+{-
 Should toggleWord have Out Toggle? or just Out String?
 
 If we have only, Out String, then how does:
@@ -1198,7 +1203,7 @@ toggleWord word =
   do i <- nextId
      let out = (Out i)
      html $ <span class="clickable" id=i><% word %></span>
-     js $ do fn <- function $ \(jEvent :: JObject JEvent) -> 
+     js $ do fn <- function $ \(jEvent :: JObject JEvent) ->
                do e <- inVar $ selectExpr jThis
                   (e # jData (string "toggled")) ?
                     ( do runExp $  e # jSetCss  ("background", "white")
@@ -1208,9 +1213,9 @@ toggleWord word =
                     )
                   return false
              runExp $ (selectId i) # click fn
-     js $ do fn <- function $ \o -> 
+     js $ do fn <- function $ \o ->
                do return (o # jText)
-             bindSendText (i, fn)   
+             bindSendText (i, fn)
      return (out, out)
 
 submit :: (XMLGenerator m, EmbedAsAttr m (Attr String Id)) => Widget m (Out Click)
@@ -1225,14 +1230,14 @@ onClick cWidget action =
      js $ do fn <- action
              runExp $ selectExpr (string $ ("#"  ++ show cId)) # click fn
      return ()
-     
+
 onToggle :: Out Toggle -> (HJScript (Exp (JEvent -> Bool)), HJScript (Exp (JEvent -> Bool))) -> Widget m ()
 onToggle tOut (onTrue, onFalse) =
   do let i = getId tOut
      js $ do fn <- function $ \(jEvent :: JObject JEvent) ->
                do e <- inVar (selectExpr jThis)
                   r <- var :: HJScript (Var Bool)
-                  (e # jData (string "toggled")) ? 
+                  (e # jData (string "toggled")) ?
                     ( do f <- onTrue
                          runExp (call f jEvent)
                     , do f <- onFalse
@@ -1265,11 +1270,11 @@ copyText oWidget iWidget =
                return false
           return $ jObj # bind ("recvMsg", callback)
 -}
-{-          
+{-
      functionDecl "bindSendText" $ \(jObj, extractFn) ->
        do callback <- function $ \(event :: JObject JEvent, destObj :: JObject JQuery) ->
             do arr <- new Array () :: HJScript (Exp (Array String))
-               arr # push (call extractFn (selectExpr (jThis))) 
+               arr # push (call extractFn (selectExpr (jThis)))
                return $ destObj # trigger ("recvText", arr )
           return $ jObj # bind ("sendText", callback )
 
@@ -1278,13 +1283,13 @@ copyText oWidget iWidget =
             do return $ call triggerAction jThis
           return $ jObj # bind ("recvTrigger", callback)
 -}
-          
-{-          
+
+{-
      functionDecl "bindRecvToggle" $ \(jObj :: JObject JQuery, toggleAction :: Exp (Bool -> Bool)) ->
        do callback <- function $ \(event :: JObject JEvent, state :: JBool) ->
             do return $ call toggleAction state
           return $ jObj # bind ("recvToggle", callback)
-          
+
      functionDecl "bindSendToggle" $ \(jObj :: JObject JQuery, getToggleState :: Exp (JQuery -> Bool)) ->
        do callback <- function $ \(event :: JObject JEvent, destObj :: JObject JQuery) ->
             do arr <- new Array () :: HJScript (Exp (Array Bool))
@@ -1292,7 +1297,7 @@ copyText oWidget iWidget =
                return $ destObj # trigger ("recvTrigger", arr )
           return $ jObj # bind ("sendToggle", callback)
 -}
-          
+
 -- let (_,(js,_)) = (runWidget $ (toggleWord "foo" :: Widget Identity (Out Click))) in js
 
 {-
@@ -1310,7 +1315,7 @@ trouble. Same with select.
 
 another way to receive an message would be if the receiving object had a method:
 
- receiveMessage (data) 
+ receiveMessage (data)
 
 anyone who wants to send a message to that object, just calls the
 function and passes the data. javascript is single threaded, so we do
@@ -1347,7 +1352,7 @@ we can still use bind / triggerHandle. But we use it on some global element like
 
 -}
 {-
-     
+
 bindSendText :: (Id, Exp (JQuery -> String)) -> HJScript ()
 bindSendText (Id i, fn) = callProc (JConst "bindSendText") (selectExpr (string $ "#" ++ show i), fn)
 
@@ -1359,9 +1364,9 @@ bindRecvTrigger (i, fn) = callProc (JConst "bindRecvTrigger") ((selectId i), fn)
 
 connect :: forall m a. (JType a, Show a) => (Out a) -> (In a) -> Widget m ()
 connect (Out oWidget) (In iWidget) =
-  js $ do sendMsg <- function $ \(event :: JObject JEvent, param :: Exp String) -> 
+  js $ do sendMsg <- function $ \(event :: JObject JEvent, param :: Exp String) ->
             do outObj <- inVar (selectId oWidget)
-               inObj  <- inVar (selectId iWidget) 
+               inObj  <- inVar (selectId iWidget)
                args <- new Array () :: HJScript (Exp (Array String))
                args # push param
                runExp $ inObj # triggerHandler ("recvMsg", args)
@@ -1370,11 +1375,11 @@ connect (Out oWidget) (In iWidget) =
           runExp $ outObj # bind ("sendMsg", sendMsg)
           return ()
 
-  -}        
+  -}
 
 
 {-
-input :: (XMLGenerator m, EmbedAsAttr m (Attr String Id)) => String -> Widget m (In Trigger, Out String)    
+input :: (XMLGenerator m, EmbedAsAttr m (Attr String Id)) => String -> Widget m (In Trigger, Out String)
 input v =
   do i <- nextId
      html $ <input type="text" id=i value=v />
@@ -1405,7 +1410,7 @@ submit =
                do -- window # alert (string "msgFn")
                   return false
              clickFn <- function $ \(jEvent :: JObject JEvent) ->
-               do args <- new Array () 
+               do args <- new Array ()
                   runExp $ selectExpr(jThis) # triggerHandler ("sendMsg", (args :: Exp (Array Trigger)))
                   return false
              e <- inVar (selectId i)
@@ -1417,31 +1422,31 @@ submit =
 undef =
   do f <- var :: HJScript (Var a)
      callProc (val f) ()
-     
-mixedThis =     
+
+mixedThis =
   do (this :: JArray Int)   # push (int 1)
      (this :: JArray String)   # push (string "foo")
      (this :: Exp TextNode) # appendData (string "bar")
-     
+
 heteroArray =
   do arr <- new Array ()
      arr # push' (int 1)
      arr # push' (string "foo")
-     
-     
+
+
 data Assoc k v = Assoc k v deriving Show
 instance (JType k, JType v, Show k, Show v) => IsClass (Assoc k v)
 instance (JType k, JType v, Show k, Show v) => HasConstructor (Assoc k v) () ()
 
 -- assocConstructor :: forall k v. (JType k, JType v, JShow k, JShow v, Show k, Show v) => k -> v -> HJScript ()
 assocConstructor :: HJScript ()
-assocConstructor = procedureDecl "Assoc" $ \() -> 
+assocConstructor = procedureDecl "Assoc" $ \() ->
   do addFn <- procedure $ \(k :: Exp String, v :: Exp Int) -> (aThis # propertyVar k) .=. v
      (aThis # derefVar "add") .=. addFn
      return ()
     where
-      aThis :: JObject (Assoc Int Int)      
-      aThis = this 
+      aThis :: JObject (Assoc Int Int)
+      aThis = this
 
 add :: (Show k, Show v, JType k, JType v) => (Exp k, Exp v) -> JObject (Assoc k v) -> HJScript ()
 add = callVoidMethod "add"
@@ -1452,22 +1457,22 @@ lookupA = callMethod "lookup"
 mapAssoc :: (Exp v -> Exp w) -> JObject (Assoc k v) -> JObject (Assoc k w)
 -}
 
-{- 
+{-
 instance Eq Id where
   (Id (JInt i)) == (Id (JInt j)) = i == j
 
 instance Ord Id where
   compare (Id (JInt i)) (Id (JInt j)) = compare i j
-  
-instance Enum Id where  
+
+instance Enum Id where
   succ (Id (JInt i)) = Id (JInt (succ i))
-  pred (Id (JInt i)) = Id (JInt (pred i))  
+  pred (Id (JInt i)) = Id (JInt (pred i))
   toEnum i = Id (JInt i)
   fromEnum (Id (JInt i)) = i
   enumFrom (Id (JInt i)) = map (Id . JInt) (enumFrom i)
 -}
 {-
-data Click              
+data Click
 data Trigger = Trigger deriving Show
 data Toggle a = Toggle deriving Show
 data Set
@@ -1484,10 +1489,10 @@ outgoing oId callback =
      args # push (call outgoingCB ())
      runExp $ selectExpr (document) # triggerHandler (id2event oId, args)
      return ()
--}          
+-}
 {-
 widgetList :: (XMLGenerator m, EmbedAsAttr m (Attr String Id)) => Widget m (In String, Out String)
-widgetList = 
+widgetList =
   do wId <- nextId
      oId <- nextId
      html $ <ol id=wId></ol>
@@ -1506,17 +1511,17 @@ n                  clickCB <- function $ \(jEvent :: JObject JEvent) ->
                   return false
      return (In wId, Out oId)
 -}
-{-     
-itemWidget :: Widget m (Out (Widget m ()))     
-itemWidget 
+{-
+itemWidget :: Widget m (Out (Widget m ()))
+itemWidget
 -}
-{-     
+{-
 jSendMsg :: (JType a, Show a) => Exp Int -> (Exp a) -> HJScript ()
-jSendMsg iId msg = 
+jSendMsg iId msg =
   do args <- new Array ()
      args # push msg
-     runExp $ selectExpr(document) # triggerHandler ((string "sendMsg_") .+. (jShow iId) , args)     
-  -}   
+     runExp $ selectExpr(document) # triggerHandler ((string "sendMsg_") .+. (jShow iId) , args)
+  -}
 
 {-
 objectVal :: HJScript (Exp (JQuery -> String))
@@ -1534,7 +1539,7 @@ toJS w =
      mapWidget (f iId oId) w
     where
       f iId oId (Out ident, i, (js, xml)) = ((In iId, oId), i, ([xmlToJs iId oId ident js xml] , []))
-      xmlToJs iId oId (Id src i) js [xml] = 
+      xmlToJs iId oId (Id src i) js [xml] =
         do x <- xml
            jw <- new JWidget (x, i)
 --           init <- procedure $ \() -> sequence_ js
@@ -1551,5 +1556,5 @@ constructor'' make =
      js $ do bindId iId $ \(event, str :: JString) ->
                do sendMsg oId make
                   return false
-     return (In iId, oId)     
--}     
+     return (In iId, oId)
+-}

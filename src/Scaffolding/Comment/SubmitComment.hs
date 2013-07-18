@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, RecordWildCards, TypeFamilies, UndecidableInstances #-}
-{-# OPTIONS_GHC -F -pgmFtrhsx -Wall -Wwarn #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, RecordWildCards, TypeFamilies, UndecidableInstances, OverloadedStrings #-}
+{-# OPTIONS_GHC -F -pgmFhsx2hs -Wall -Wwarn #-}
 module Scaffolding.Comment.SubmitComment
     ( submitCommentPage
     ) where
@@ -12,11 +12,11 @@ import Data.SafeCopy (SafeCopy)
 import Data.Typeable (Typeable)
 import Data.Text (Text)
 import qualified Data.Text as Text
+import qualified Data.Text.Lazy as TL
 import Data.Time.Clock (getCurrentTime)
 import Happstack.Auth.Core.Profile (getUserId)
 import Happstack.Server (Happstack, ToMessage, Response)
-import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), genElement)
-import qualified HSX.XMLGenerator as HSX
+import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLType, fromStringLit, genElement)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Comment.Acid (AddComment(..), AcidComment(..))
 import Scaffolding.Comment.Types (Comment(..), CommentId(..), TextHtml(..), Spaminess(..))
@@ -38,8 +38,8 @@ submitCommentPage :: (Happstack m,
                       HasAppConf m,
                       AcidComment topic m,
                       Comment.MkURL topic (URL m),
-                      EmbedAsAttr m (Attr String (URL m)),
-                      ToMessage (HSX.XMLType m),
+                      EmbedAsAttr m (Attr TL.Text (URL m)),
+                      ToMessage (XMLType m),
                       EmbedAsChild m TextHtml,
                       Data topic,
                       Typeable topic,
@@ -76,7 +76,7 @@ submitCommentForm =
 
       -- fields
       msg       = li $ notEmptyText $ Text.pack <$> inputTextArea (Just 80) (Just 20)  Nothing
-      submitBtn = li $ submit "Submit Comment" `setAttrs` [("class" := "submit")]
+      submitBtn = li $ submit "Submit Comment" `setAttrs` [("class" := "submit") :: Attr TL.Text TL.Text]
 
       -- transformer
       toComment :: (Happstack m, MonadRoute m, MonadRender m, MonadUser m) => Text -> m (Either String Comment)
