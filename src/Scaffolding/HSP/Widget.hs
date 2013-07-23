@@ -36,16 +36,16 @@ class (XMLGenerator x,
        XMLGen x,
        SetAttr x (XMLType x),
        AppendChild x (XMLType x),
-       EmbedAsChild x String,
+       EmbedAsChild x TL.Text,
        EmbedAsChild x Text,
        EmbedAsChild x Char,
-       EmbedAsAttr x (Attr String String),
-       EmbedAsAttr x (Attr String Int),
-       EmbedAsAttr x (Attr String Bool),
+       EmbedAsAttr x (Attr TL.Text TL.Text),
+       EmbedAsAttr x (Attr TL.Text Int),
+       EmbedAsAttr x (Attr TL.Text Bool),
        EmbedAsChild x HSP.XML,
        MonadHeaders IO x,
-       StringType x ~ String,
-       Widgets x) => WidgetGenerator x
+       StringType x ~ TL.Text
+       ) => WidgetGenerator x
 
 -- this is pretty wacky
 flattenForm :: (Functor m, Monad m, MonadHeaders IO x) => Form m i e ([HJScript ()], [XMLGenT x (XMLType x)]) a -> Form m i e [XMLGenT x (XMLType x)] a
@@ -148,8 +148,15 @@ instance JShow Id where
   jshow (Id src prefix i) = (string ((show src) ++ "_" ++ prefix ++ "_")) .+. jshow i
   jshow _ = error "JShow Id"
 
+{-
 instance EmbedAsAttr (ServerPartT IO) (Attr String Id) where
   asAttr (n := i) = asAttr (n := show i)
+
+instance EmbedAsAttr (ServerPartT IO) (Attr TL.Text Id) where
+  asAttr (n := i) = asAttr (n := (TL.pack $ show i))
+-}
+
+
 {-
 instance EmbedAsAttr Identity (Attr String Id) where
   asAttr (n := i) = asAttr (n := show i)
@@ -190,9 +197,9 @@ newtype Widget m a =
   deriving (Functor, Monad, MonadState (Id, Int))
 
 -- This is just a 'class alias' so that we can have short type signatures
-class (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), (NextId (Widget m)), StringType m ~ String) => Widgets m
+-- class (Functor m, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), EmbedAsAttr m (Attr TL.Text TL.Text), (NextId (Widget m)), StringType m ~ TL.Text) => Widgets m
 -- instance Widgets Identity
-instance Widgets HJScript'
+-- instance Widgets HJScript'
 -- instance Widgets (ServerPartT IO)
 
 -- | run a 'Widget' and get back the javascript and html it produces
@@ -408,10 +415,11 @@ mergeOuts outs =
 --
 -- The argument is the label to show in the button. It will also be
 -- the String in the Out message.
-submit :: (Widgets m) => String -> Widget m (Out String)
+submit :: (StringType m ~ TL.Text, EmbedAsAttr m (Attr TL.Text TL.Text), EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m)) =>
+          String -> Widget m (Out String)
 submit val =
   do oId <- Out <$> nextId
-     html $ <input type="submit" id=(getId oId) value=val />
+     html $ let fromStringLit = HSP.fromStringLit in <input type="submit" id=(getId oId) value=(TL.pack val) />
      js $ do clickCB <- function $ \(jEvent :: JObject JEvent) ->
                do -- jEvent # jPreventDefault ()
                   o <- inVar (selectExpr jThis)
@@ -425,10 +433,10 @@ submit val =
 -- The first argument of the tuple is the
 -- label to show in the dropdown. The second argument is the message
 -- to send when the item is selected.
-select :: (Show a, JType a, Widgets m) => String -> [(String, Exp a)] -> Widget m (Out a)
+select :: (Show a, JType a, StringType m ~ TL.Text, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m)) => String -> [(String, Exp a)] -> Widget m (Out a)
 select title vals =
   do oId <- Out <$> nextId
-     html $ <select id=(getId oId) />
+     html $ let fromStringLit = HSP.fromStringLit in <select id=(getId oId) />
      js $ do selectElem <- inVar $ selectId (getId oId)
              -- empty elem at the top
              empty <- <option><% title %></option>
@@ -566,11 +574,11 @@ msg     = deref "msg"
 
 -- | creates a single word which can be toggled on/off
 -- instead of sticking (bool, string) in an array, should we have a toggle object?
-toggleWord :: forall a m. (XMLGenerator m, EmbedAsChild m String, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => String -> JInt -> Widget m (In (JToggle Int), Out (JToggle (Rec Int String)))
+-- toggleWord :: forall a m. (XMLGenerator m, EmbedAsChild m String, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => String -> JInt -> Widget m (In (JToggle Int), Out (JToggle (Rec Int String)))
 toggleWord txt value =
   do oId <- nextId
      iId <- nextId
-     html $ <span id=oId class="clickable"><% txt %></span>
+     html $ let fromStringLit = HSP.fromStringLit in <span id=oId class="clickable"><% TL.pack txt %></span>
      js $ do -- handle output
              clickCB <- function $ \(jEvent :: JObject JEvent) ->
               do e    <- inVar (selectExpr jThis)
@@ -627,11 +635,12 @@ returned when it is clicked.
 
 
 -}
-paragraphWidget :: (XMLGenerator m, EmbedAsChild m String, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => [String] -> Widget m ((In (Array Int)), Out (JToggle (Rec Int String)))
+-- paragraphWidget :: (XMLGenerator m, EmbedAsChild m String, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => [String] -> Widget m ((In (Array Int)), Out (JToggle (Rec Int String)))
 paragraphWidget words =
   do iId <- In <$> nextId
      pId <- nextId
-     wordz <- plugW (\c -> [<p class="document" id=pId><% c %></p>])
+     wordz <- let fromStringLit = HSP.fromStringLit in
+              plugW (\c -> [<p class="document" id=pId><% c %></p>])
                (mapM (\(txt, value) -> toggleWord txt value) (zip words (map int [0..])))
      oId <- mergeOuts (map snd wordz)
      js $ bindId iId $ \(event, onWords :: Exp (Array Int)) ->
@@ -686,11 +695,11 @@ listItem =
 -- | a 'Widget' which listens for incoming 'JWidget's which output
 -- Strings. It adds these JWidgets to a list, and resends theirs
 -- outputs to its output.
-widgetList :: (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => Widget m (In (JWidget (Out String)), Out String)
+widgetList :: (XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JWidget (Out String)), Out String)
 widgetList =
   do iId <- In  <$> nextId
      oId <- Out <$> nextId
-     html $ <ol id=(getId iId)></ol>
+     html $ let fromStringLit = HSP.fromStringLit in <ol id=(getId iId)></ol>
      js $ do bindId iId $ \(event, jwidget :: Exp (JWidget (Out String))) ->
                do e <- inVar $ selectId iId
                   d <- <input type="submit" value="x" />
@@ -708,11 +717,11 @@ widgetList =
      return (iId, oId)
 
 -- | similar to 'widgetList' except that instead of merging the outputs, it outputs an array containing the last message sent by each element of the list.
-widgetList3 :: forall m a. (Show a, JType a, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => Widget m (In (JWidget (Out a)), Out (Array a))
+widgetList3 :: forall m a. (Show a, JType a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), EmbedAsAttr m (Attr TL.Text TL.Text), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JWidget (Out a)), Out (Array a))
 widgetList3 =
   do iId      <- In  <$> nextId
      oId      <- Out <$> nextId
-     html $ <ol class="nounphraselist"  id=(getId iId)></ol>
+     html $ let fromStringLit = HSP.fromStringLit in <ol class="nounphraselist"  id=(getId iId)></ol>
      js $ do ol  <- inVar $ selectId iId
              ol # sortable
              toArrayFn <- function $ \() ->
@@ -757,12 +766,12 @@ widgetList3 =
 
 
 -- | similar to 'widgetList', but designed to work with 'JToggle' stuff
-widgetList2 :: forall a m. (XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => Widget m (In (JToggle (Rec Int a)), In (JWidget (In (JToggle (Rec Int a)), Out (Array Int))), Out (Array Int))
+widgetList2 :: forall a m. (XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JToggle (Rec Int a)), In (JWidget (In (JToggle (Rec Int a)), Out (Array Int))), Out (Array Int))
 widgetList2 =
   do iId <- In  <$> nextId
      wId <- In  <$> nextId
      oId <- Out <$> nextId
-     html $ <ol id=(getId iId)></ol>
+     html $ let fromStringLit = HSP.fromStringLit in <ol id=(getId iId)></ol>
      js $ do bindId wId $ \(event, jwidget) -> --  :: Exp (JWidget (In (JToggle (Rec Int a))))) ->
                do e <- inVar $ selectId iId
                   d <- <input type="submit" class="delete" value="x" />
@@ -870,10 +879,10 @@ constructor make =
 -- Another set of functions for a widget similar to paragraphWidget
 
 -- A widget which receives a message and shows it in a paragraph tag
-outputToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => Widget m (In (JToggle (Rec Int a)))
+outputToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JToggle (Rec Int a)))
 outputToggle =
   do i <- In <$> nextId
-     html $ <p id=(getId i) />
+     html $ let fromStringLit = HSP.fromStringLit in <p id=(getId i) />
      js $ do callback <- function $ \(event :: Exp JEvent, jtoggle :: Exp (JToggle (Rec Int a))) ->
                do e <- inVar $ selectId i
                   jtoggle # toggled ?
@@ -888,10 +897,10 @@ outputToggle =
      return i
 
 -- A widget which receives a message and shows it in a paragraph tag
-outputMultiToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), NextId (Widget m), StringType m ~ String) => Widget m (In (JToggle (Rec Int a)))
+outputMultiToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), EmbedAsAttr m (Attr TL.Text TL.Text), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JToggle (Rec Int a)))
 outputMultiToggle =
   do i <- In <$> nextId
-     html $ <p class="subjects" id=(getId i) />
+     html $ let fromStringLit = HSP.fromStringLit in <p class="subjects" id=(getId i) />
      js $ do bindId i $ \(event :: Exp JEvent, jtoggle :: Exp (JToggle (Rec Int a))) ->
                do e <- inVar $ selectId i
                   words <- inVar $ (e # jData("words") :: Exp OrderedAssoc)
@@ -1048,10 +1057,12 @@ onReadyXML' = runIdentity . (unHSPT :: HSPT HSP.XML Identity HSP.XML -> Identity
 -- | Writes the output of a 'Widget' to a hidden input field. This is
 -- useful if you want to use a Widget in an html form, since you need
 -- a way to get the output of the widget into the form data.
-sink :: forall a m. (JType a, XMLGenerator m, EmbedAsAttr m (Attr String String), EmbedAsAttr m (Attr String Id), NextId (Widget m), StringType m ~ String) => String -> String -> Widget m (In a)
+sink :: forall a m. (JType a, XMLGenerator m, StringType m ~ TL.Text, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m)) =>
+        String -> String -> Widget m (In a)
 sink n v =
   do i <- In <$> nextId
-     html $ <input type="hidden" name=(n)  id=(getId i) value=(v) />
+     let fromStringLit = HSP.fromStringLit
+     html $ <input type="hidden" name=(TL.pack n)  id=(getId i) value=(TL.pack v) />
      js $ do bindId i $ \(event, str :: Exp a) ->
                do e <- inVar $ selectId i
 --                  window # alert (stringify str)
@@ -1075,12 +1086,12 @@ instance (JSONCast a) => JSONCast (Array a) where
 -- | turn a 'Widget' into formlet.
 widgetToForm ::
     ( XMLGenerator m
-    , StringType m ~ String
+    , StringType m ~ TL.Text
     , Functor v
     , Monad v
     , FormInput i f
-    , EmbedAsAttr m (Attr String Id)
-    , EmbedAsAttr m (Attr String String)
+    , EmbedAsAttr m (Attr TL.Text Id)
+    , EmbedAsAttr m (Attr TL.Text TL.Text)
     , NextId (Widget m)
     , Functor m
     , Monad m

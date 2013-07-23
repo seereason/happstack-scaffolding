@@ -1,5 +1,5 @@
 Name:             happstack-scaffolding
-Version:          0.27.1
+Version:          0.28.0
 License:          AllRightsReserved
 Copyright:        (c) 2010-2011, SeeReason Partners LLC
 Author:           SeeReason Partners <partners@seereason.com>
@@ -73,7 +73,7 @@ Library
                    HJavaScript,
                    HJScript >= 0.7,
                    hslogger,
-                   hsp,
+                   hsp >= 0.9.2,
                    hsx-jmacro,
                    html,
                    http-types,
