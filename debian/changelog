@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.28) unstable; urgency=low
+
+  * Bump version to match cabal file.
+
+ -- David Fox <dsf@seereason.com>  Tue, 23 Jul 2013 11:45:06 -0700
+
 haskell-happstack-scaffolding (0.25) unstable; urgency=low
 
   * AppConf changes - remove store, imageStore and imageCache, add top.
