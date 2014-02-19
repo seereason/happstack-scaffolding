@@ -14,7 +14,6 @@ module Scaffolding.Pages.AppTemplate
 import Control.Applicative ((<$>))
 import "mtl" Control.Monad.Trans
 import Control.Monad.Writer (MonadWriter)
-import Data.Generics.SYB.WithClass.Instances ()
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import Happstack.Server (Happstack, ToMessage(..), Response, toResponse)

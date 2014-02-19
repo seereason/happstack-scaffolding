@@ -90,7 +90,6 @@ Library
                    safecopy,
                    set-extra,
                    syb,
-                   syb-with-class,
                    stm,
                    template-haskell,
                    text >= 0.11,

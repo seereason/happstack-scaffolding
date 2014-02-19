@@ -5,7 +5,6 @@ module Scaffolding.Pages.UnicodeKey
     ( unicodeKeyPage
     ) where
 
-import Data.Generics.SYB.WithClass.Instances ()
 import qualified Data.Text.Lazy as TL
 import Data.List (genericLength, genericSplitAt, unfoldr)
 import Happstack.Server (Happstack, Response, ToMessage)

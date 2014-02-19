@@ -9,7 +9,6 @@ module Scaffolding.Pages.Common
     , makeForm
     ) where
 
-import Data.Generics.SYB.WithClass.Instances ()
 import Data.Text (Text)
 import qualified Data.Text.Lazy as TL
 import Happstack.Server (Happstack, Input, seeOther, ToMessage(..), Response, toResponse)
