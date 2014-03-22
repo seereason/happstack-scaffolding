@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 {-# OPTIONS -F -pgmFhsx2hs #-}
-{-# OPTIONS -Wall -Werror #-}
+{-# OPTIONS -Wall #-}
 {-# OPTIONS -fno-warn-orphans -fno-warn-name-shadowing #-}
 module Scaffolding.ProfileData.Markup where
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies, OverloadedStrings #-}
-{-# OPTIONS_GHC -Wall -Werror -F -pgmFhsx2hs #-}
+{-# OPTIONS_GHC -Wall -F -pgmFhsx2hs #-}
 module Scaffolding.Pages.FormPart
     ( FormDF
     , formPart
