@@ -125,4 +125,4 @@ class HasAppConf m where
     askAppConf :: m AppConf
     askTheme :: m (Theme m)
 
-deriving instance HasAppConf m => HasAppConf (XMLGenT m)
+instance HasAppConf (XMLGenT m)

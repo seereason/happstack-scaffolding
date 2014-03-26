@@ -103,7 +103,7 @@ addComment coid comment =
        return (Right comment')
 
 -- FIXME: we do not protect against one user flag some as spam multiple times
-flagComment :: (Data topic, Typeable topic, Eq topic, Ord topic) => CommentId -> Update (State topic) ()
+flagComment :: (Data topic, Eq topic, Ord topic) => CommentId -> Update (State topic) ()
 flagComment cid =
     do cs <- get 
        case getOne $ (commentLists cs) @= cid of
