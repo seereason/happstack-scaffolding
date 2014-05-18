@@ -18,7 +18,7 @@ import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Text.Lazy as TL
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
-import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)
+import HSP (XMLGenT(..), unXMLGenT, GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)
 import HSP.Google.Analytics (UACCT)
 -- import Language.HJavaScript.Syntax (Block)
 import System.Console.GetOpt (ArgDescr(..), ArgOrder(..), OptDescr(..), getOpt, usageInfo)
@@ -125,4 +125,6 @@ class HasAppConf m where
     askAppConf :: m AppConf
     askTheme :: m (Theme m)
 
-instance HasAppConf (XMLGenT m)
+instance HasAppConf m => HasAppConf (XMLGenT m) where
+    askAppConf = XMLGenT askAppConf
+    askTheme = error "askTheme"
