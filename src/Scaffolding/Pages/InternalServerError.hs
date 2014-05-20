@@ -6,13 +6,13 @@ module Scaffolding.Pages.InternalServerError
 
 import qualified Data.Text.Lazy as TL
 import Happstack.Server (Happstack, Response, unauthorized, ToMessage)
-import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLType, genElement, fromStringLit)
+import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLGenT, XMLType, genElement, fromStringLit)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Pages.AppTemplate (MonadRender, template)
 import Scaffolding.ProfileData.User (MonadUser)
 import Web.Routes.RouteT (MonadRoute, URL)
 
-internalServerErrorPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) => String -> m Response
+internalServerErrorPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, HasAppConf (XMLGenT m), EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) => String -> m Response
 internalServerErrorPage msg =
     do unauthorized =<< template "Internal Server Error" ()
           <div id="main">

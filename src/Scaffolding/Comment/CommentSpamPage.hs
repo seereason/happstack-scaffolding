@@ -11,7 +11,7 @@ import Data.Data (Data)
 import Data.SafeCopy (SafeCopy)
 import qualified Data.Text.Lazy as TL
 import Happstack.Server (Happstack, Response, Method(POST), methodM, ok, ToMessage)
-import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLType, genElement, fromStringLit)
+import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLGenT, XMLType, genElement, fromStringLit)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Pages.AppTemplate (MonadRender, template)
 import Scaffolding.Comment.Acid (State, AcidComment(..), FlagComment(..))
@@ -23,6 +23,7 @@ commentSpamPage :: forall m topic.
                    (Happstack m,
                     MonadRoute m,
                     HasAppConf m,
+                    HasAppConf (XMLGenT m),
                     ToMessage (XMLType m),
                     MonadUser m,
                     MonadRender m,

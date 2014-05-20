@@ -21,7 +21,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL
 import Happstack.Auth.Core.Profile (UserId)
 import Happstack.Server (Happstack, Response, ok, notFound, ToMessage)
-import HSP (XMLGenerator, GenXML, EmbedAsChild(..), EmbedAsAttr(..), Attr(..), XMLType, StringType, unXMLGenT, genElement, genEElement, fromStringLit)
+import HSP (XMLGenerator, GenXML, EmbedAsChild(..), EmbedAsAttr(..), Attr(..), XMLGenT, XMLType, StringType, unXMLGenT, genElement, genEElement, fromStringLit)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Comment.Acid (State, AcidComment(askAcidComment), AskComment(..), AskCommentsOn(..))
 import Scaffolding.Comment.CommentSpamPage (commentSpamPage)
@@ -42,6 +42,7 @@ doComment :: forall topic m.
               MonadUserName m,
               MonadRender m,
               HasAppConf m,
+              HasAppConf (XMLGenT m),
               AcidComment topic m,
               Comment.MkURL topic (URL m),
               EmbedAsAttr m (Attr TL.Text (URL m)),
@@ -127,6 +128,7 @@ commentPage :: (MonadRender m,
                 Happstack m,
                 MonadRoute m,
                 HasAppConf m,
+                HasAppConf (XMLGenT m),
                 AcidComment topic m,
                 Comment.MkURL topic (URL m),
                 EmbedAsAttr m (Attr TL.Text (URL m)),

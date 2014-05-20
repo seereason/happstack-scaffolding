@@ -21,7 +21,7 @@ import Happstack.Auth.Core.Profile   (UserId(..))
 import Happstack.Server.HSP.HTML ()
 import Happstack.Server.SURI ({- instance ToSURI Text -})
 -- import HJScript.Utils ()
-import HSP (XML, GenXML, XMLGenerator, unXMLGenT, EmbedAsChild, EmbedAsAttr, Attr(..), StringType, XMLType, asChild, asAttr, genElement, genEElement, fromStringLit)
+import HSP (XML, XMLGenT, GenXML, XMLGenerator, unXMLGenT, EmbedAsChild, EmbedAsAttr, Attr(..), StringType, XMLType, asChild, asAttr, genElement, genEElement, fromStringLit)
 import HSP.Google.Analytics(analytics)
 -- import qualified HSX.XMLGenerator as HSX
 -- import Language.HJavaScript.Syntax (Block)
@@ -48,6 +48,7 @@ class (Functor x,
        ) => MonadRender x
 
 template :: (HasAppConf m,
+             HasAppConf (XMLGenT m),
              ToMessage (XMLType m),
              MonadUser m,
              MonadRoute m,
@@ -74,6 +75,7 @@ template' :: ( Happstack m
              , MonadWriter [XML] m
              , XMLGenerator m
              , HasAppConf m
+             , HasAppConf (XMLGenT m)
              , EmbedAsChild m body
              , EmbedAsChild m headers
 --             , EmbedAsChild m (Block ())
@@ -98,6 +100,7 @@ lightTemplate :: ( ToMessage (XMLType m)
                  , EmbedAsAttr m (Attr TL.Text (URL m))
                  , MonadRoute m
                  , HasAppConf m
+                 , HasAppConf (XMLGenT m)
                  , Functor m
                  , EmbedAsChild m headers
                  , EmbedAsChild m extraHeaders
@@ -119,6 +122,7 @@ lightTemplate mUid title headers extraHeaders body =
 
 lightTemplate' :: ( MonadRoute m
                   -- , MonadRender m
+                  , HasAppConf (XMLGenT m)
                   , HasAppConf m
                   , XMLGenerator m
                   , EmbedAsAttr m (Attr TL.Text (URL m))

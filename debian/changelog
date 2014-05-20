@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.28.2) unstable; urgency=low
+
+  * Trying to diagnose issues with HasAppConf (XMLGenT m)
+
+ -- David Fox <dsf@seereason.com>  Tue, 20 May 2014 06:55:50 -0700
+
 haskell-happstack-scaffolding (0.28.1) unstable; urgency=low
 
   * Changes for ghc-7.8.

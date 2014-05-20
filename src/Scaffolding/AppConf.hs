@@ -13,19 +13,18 @@ module Scaffolding.AppConf
     , HasAppConf(askAppConf, askTheme)
     ) where
 
-import Data.Text (Text, pack, empty)
-import Data.Text.Encoding (encodeUtf8)
+import Data.Text (Text, pack)
 import qualified Data.Text.Lazy as TL
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
-import HSP (XMLGenT(..), unXMLGenT, GenXML, GenChildList, XMLGenerator, EmbedAsChild, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)
+import HSP (XMLGenT(..), GenXML, GenChildList, XMLGenerator, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)
 import HSP.Google.Analytics (UACCT)
 -- import Language.HJavaScript.Syntax (Block)
 import System.Console.GetOpt (ArgDescr(..), ArgOrder(..), OptDescr(..), getOpt, usageInfo)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
 import Facebook (Credentials(..))
-import Web.Routes.RouteT (URL, MonadRoute)
+import Web.Routes.RouteT (URL)
 
 data LogMode
     = Production
@@ -117,7 +116,7 @@ menuBar menus =
 data Theme m
     = Theme
       { menu :: Maybe UserId -> [Menu (URL m)]
-      , footer :: GenXML m
+      , footer :: GenXML m -- XMLGenT m (XMLType m)
       , widgetHeaders :: GenChildList m
       }
 
@@ -125,6 +124,8 @@ class HasAppConf m where
     askAppConf :: m AppConf
     askTheme :: m (Theme m)
 
-instance HasAppConf m => HasAppConf (XMLGenT m) where
+{-
+instance (Monad m, HasAppConf m {-, URL m ~ URL (XMLGenT m), XMLType m ~ XMLType (XMLGenT m) -}) => HasAppConf (XMLGenT m) where
     askAppConf = XMLGenT askAppConf
-    askTheme = error "askTheme"
+    askTheme = return $ Theme {menu' = undefined, footer' = undefined, widgetHeaders' = undefined}
+-}

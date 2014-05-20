@@ -16,7 +16,7 @@ import qualified Data.Text.Lazy as TL
 import Data.Time.Clock (getCurrentTime)
 import Happstack.Auth.Core.Profile (getUserId)
 import Happstack.Server (Happstack, ToMessage, Response)
-import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLType, fromStringLit, genElement)
+import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLGenT, XMLType, fromStringLit, genElement)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Comment.Acid (AddComment(..), AcidComment(..))
 import Scaffolding.Comment.Types (Comment(..), CommentId(..), TextHtml(..), Spaminess(..))
@@ -36,6 +36,7 @@ submitCommentPage :: (Happstack m,
                       MonadUser m,
                       MonadRender m,
                       HasAppConf m,
+                      HasAppConf (XMLGenT m),
                       AcidComment topic m,
                       Comment.MkURL topic (URL m),
                       EmbedAsAttr m (Attr TL.Text (URL m)),
