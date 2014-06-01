@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
+{-# LANGUAGE DatatypeContexts, DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
     PackageImports, RankNTypes, TemplateHaskell, TypeFamilies, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 {-# OPTIONS -Wall -Wwarn -fno-warn-orphans #-}
 module Scaffolding.Comment.Acid
