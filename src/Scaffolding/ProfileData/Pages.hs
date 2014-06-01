@@ -31,7 +31,7 @@ import Text.Digestive.Types (Form)
 import Web.Routes.RouteT (MonadRoute, URL)
 import Web.Routes                  (showURL)
 
-editProfileDataPage :: forall m. (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadIO m, MonadRender m, HasAppConf m, HasAppConf (XMLGenT m), EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) =>
+editProfileDataPage :: forall m. (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadIO m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) =>
                        URL m -> m Response
 editProfileDataPage here =
     requireSession $
@@ -75,7 +75,7 @@ editProfileDataForm username email optOut roles =
             <*> (li $ (inputCheckBox (Set.member ProfileData.User roles)  <++ label (TL.pack "add to User group.")))
             <*  (li $ submit "update"))
 
-editUserNamePage :: (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadRender m, HasAppConf m, HasAppConf (XMLGenT m), EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m), StringType m ~ TL.Text) =>
+editUserNamePage :: (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m), StringType m ~ TL.Text) =>
                     URL m -> m Response
 editUserNamePage here =
     requireSession $

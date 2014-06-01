@@ -21,7 +21,7 @@ import Text.JSON                     (encode)
 import Web.Routes.Happstack          (seeOtherURL)
 import Web.Routes.RouteT (MonadRoute, URL)
 
-handle :: (Happstack m, MonadRoute m, MonadIO m, MonadUserName m, MonadRender m, HasAppConf m, HasAppConf (XMLGenT m), MkURL.MkURL (URL m),
+handle :: (Happstack m, MonadRoute m, MonadIO m, MonadUserName m, MonadRender m, HasAppConf m, MkURL.MkURL (URL m),
            EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) =>
           Text -> MkURL.URL -> m Response
 handle postCreateURL url =

@@ -18,7 +18,7 @@ import qualified Scaffolding.Unicode.Render as UR (charsOfInterest)
 import Web.Routes.RouteT (MonadRoute, URL)
 import Web.Routes.XMLGenT ()
 
-unicodeKeyPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, HasAppConf (XMLGenT m), EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m), StringType m ~ TL.Text) => m Response
+unicodeKeyPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m), StringType m ~ TL.Text) => m Response
 unicodeKeyPage =
     template "Unicode Keys" ([] :: [XML]) text
     where

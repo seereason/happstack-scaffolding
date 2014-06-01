@@ -8,6 +8,7 @@ module Scaffolding.Auth
        ) where
 
 import Control.Applicative  ((<$>))
+import Control.Monad.Trans (lift)
 import Data.Acid (AcidState)
 import Data.Acid.Advanced (query')
 import Data.Text (Text)
@@ -45,7 +46,6 @@ doAuth :: forall m v weburl.
            MonadRoute' weburl v (m weburl),
            MonadRoute' AuthURL v (m AuthURL),
            HasAppConf (m weburl),
-           HasAppConf (XMLGenT (m weburl)),
            MonadUserName (m weburl),
            MonadRoute (m weburl),
            MkURL weburl,
@@ -79,7 +79,6 @@ doProfile :: forall m v weburl.
               EmbedAsAttr (m weburl) (Attr TL.Text weburl),
               MonadRender (m weburl),
               HasAppConf (m weburl),
-              HasAppConf (XMLGenT (m weburl)),
               ToMessage (XMLType (m weburl)),
               MonadUser (m weburl), MkURL (URL (m weburl)),
               Happstack (m weburl),
@@ -105,7 +104,6 @@ doProfileData :: (MkURL.MkURL (URL m),
                   MonadRender m,
                   MonadUserName m,
                   HasAppConf m,
-                  HasAppConf (XMLGenT m),
                   ToMessage (XMLType m),
                   EmbedAsAttr m (Attr TL.Text (URL m)),
                   MonadRoute m,
@@ -129,7 +127,6 @@ requiresRole :: (URL m ~ weburl,
                  Happstack m,
                  MonadRoute m,
                  HasAppConf m,
-                 HasAppConf (XMLGenT m),
                  EmbedAsAttr m (Attr TL.Text weburl),
                  ToMessage (XMLType m)) =>
                 ProfileData.Role -> weburl -> m weburl
@@ -152,7 +149,6 @@ urlTemplate :: forall headers body authurl weburl v m.
                 MonadRoute' authurl v (m authurl),
                 MonadRender (m weburl),
                 HasAppConf (m weburl),
-                HasAppConf (XMLGenT (m weburl)),
                 ToMessage (XMLType (m weburl)),
                 MonadUser (m weburl),
                 Happstack (m weburl),

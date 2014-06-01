@@ -1,3 +1,9 @@
+haskell-happstack-scaffolding (0.28.3) unstable; urgency=low
+
+  * Remove many bogus HasAppConf (XMLGenT m) supers.
+
+ -- David Fox <dsf@seereason.com>  Sun, 01 Jun 2014 10:32:51 -0700
+
 haskell-happstack-scaffolding (0.28.2) unstable; urgency=low
 
   * Trying to diagnose issues with HasAppConf (XMLGenT m)

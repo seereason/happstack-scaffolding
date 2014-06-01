@@ -123,9 +123,3 @@ data Theme m
 class HasAppConf m where
     askAppConf :: m AppConf
     askTheme :: m (Theme m)
-
-{-
-instance (Monad m, HasAppConf m {-, URL m ~ URL (XMLGenT m), XMLType m ~ XMLType (XMLGenT m) -}) => HasAppConf (XMLGenT m) where
-    askAppConf = XMLGenT askAppConf
-    askTheme = return $ Theme {menu' = undefined, footer' = undefined, widgetHeaders' = undefined}
--}
