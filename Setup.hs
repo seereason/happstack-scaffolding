@@ -9,10 +9,10 @@ import Distribution.Simple.Setup
 import Distribution.Simple.LocalBuildInfo (LocalBuildInfo(buildDir))
 import Distribution.Simple.Program
 import Distribution.Verbosity
-import System.Cmd
 import System.Exit
 import System.IO
 import System.Posix.Files (fileExist)
+import System.Process
 
 hsx2hsProgram = simpleProgram "hsx2hs"
 
