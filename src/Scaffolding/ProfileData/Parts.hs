@@ -10,7 +10,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL
 import Happstack.Auth.Core.Profile  (UserId(..), getUserId)
 import Happstack.Server
-import HSP (EmbedAsAttr, Attr, XMLType, XMLGenT)
+import HSP (EmbedAsAttr, Attr, XMLType)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Pages.AppTemplate (MonadRender)
 import qualified Scaffolding.ProfileData.Acid as ProfileData

@@ -8,7 +8,6 @@ module Scaffolding.Auth
        ) where
 
 import Control.Applicative  ((<$>))
-import Control.Monad.Trans (lift)
 import Data.Acid (AcidState)
 import Data.Acid.Advanced (query')
 import Data.Text (Text)
@@ -31,7 +30,7 @@ import qualified Scaffolding.MkURL as MkURL
 import Scaffolding.ProfileData.User (MonadUser, MonadUserName, askAcidAuth, askAcidProfileData, lookMaybeUserId)
 import Scaffolding.MkURL (MkURL)
 import Text.Blaze.Html (Html)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Web.Routes (MonadRoute(askRouteFn), RouteT(unRouteT), nestURL, showURL)
 import Web.Routes.Happstack (seeOtherURL)
 import Web.Routes.RouteT (URL, liftRouteT)
