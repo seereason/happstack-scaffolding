@@ -64,7 +64,7 @@ Library
                    fb,
                    fgl,
                    filepath,
-                   happstack-authenticate < 2
+                   happstack-authenticate < 2,
                    happstack-hsp,
                    happstack-search,
                    ixset,
