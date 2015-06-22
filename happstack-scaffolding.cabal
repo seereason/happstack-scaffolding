@@ -18,6 +18,12 @@ Library
  Build-Tools:      hsx2hs
  Exposed-Modules:  Scaffolding.AppConf
                    Scaffolding.Auth
+                   Scaffolding.Comment.Acid
+                   Scaffolding.Comment.CommentPage
+                   Scaffolding.Comment.CommentSpamPage
+                   Scaffolding.Comment.SubmitComment
+                   Scaffolding.Comment.Types
+                   Scaffolding.Comment.URL
                    Scaffolding.HJScriptExtra
                    Scaffolding.HSP.Widget
                    Scaffolding.Markdown
