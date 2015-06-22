@@ -194,7 +194,7 @@ generate fresh variable names.
 
 newtype Widget m a =
   Widget { unWidget :: RWS () ([HJScript ()],[GenXML m]) (Id, Int) a }
-  deriving (Functor, Monad, MonadState (Id, Int))
+  deriving (Applicative, Functor, Monad, MonadState (Id, Int))
 
 -- This is just a 'class alias' so that we can have short type signatures
 -- class (Functor m, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), EmbedAsAttr m (Attr TL.Text TL.Text), (NextId (Widget m)), StringType m ~ TL.Text) => Widgets m
