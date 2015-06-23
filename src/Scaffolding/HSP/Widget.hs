@@ -3,7 +3,7 @@
 {-# OPTIONS -F -pgmFhsx2hs -Wwarn -fno-warn-orphans -fno-warn-name-shadowing -fno-warn-unused-matches #-}
 module Scaffolding.HSP.Widget where
 
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), Applicative)
 import Control.Monad ({-liftM-})
 import Control.Monad.RWS (RWS, runRWS, mapRWS)
 import Control.Monad.State (MonadState (get, put))
