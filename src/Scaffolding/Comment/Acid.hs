@@ -1,5 +1,7 @@
-{-# LANGUAGE DatatypeContexts, DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
+{-# LANGUAGE DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
     PackageImports, RankNTypes, TemplateHaskell, TypeFamilies, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
+-- This is needed by deriveSafeCopy
+{-# LANGUAGE DatatypeContexts #-}
 {-# OPTIONS -Wall -Wwarn -fno-warn-orphans #-}
 module Scaffolding.Comment.Acid
     ( State(..)
@@ -24,7 +26,7 @@ import Data.IxSet.Ix (Ix(Ix))
 import Data.List               (find)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import Data.SafeCopy           (base, deriveSafeCopy)
+import Data.SafeCopy           (SafeCopy, base, deriveSafeCopy)
 import Data.Sequence           ((|>))
 import qualified Data.Sequence as Seq
 import Data.Data               (Data)
@@ -54,7 +56,7 @@ instance (Data topic, Ord topic) => Indexable (CommentList topic) where
 
 type Comments topic = IxSet (CommentList topic)
 
-data (Data topic, Ord topic) => State topic =
+data {-(SafeCopy topic, Data topic, Ord topic, Typeable topic) =>-} State topic =
     State { commentLists  :: Comments topic
           , nextCommentId :: CommentId
           } deriving (Data, Eq, Ord, Show, Typeable)
@@ -62,32 +64,32 @@ $(deriveSafeCopy 0 'base ''State)
 
 class AcidComment topic m | m -> topic where
     askAcidComment :: m (AcidState (State topic))
-  
-initial :: (Ord topic, Data topic) => State topic
-initial 
+
+initial :: (Data topic, Ord topic) => State topic
+initial
     = State { commentLists  = IxSet.empty
             , nextCommentId = CommentId 1
             }
 
-askComments :: (Data topic, Ord topic) => Query (State topic) [CommentList topic]
-askComments = 
-    do cls <- commentLists <$> ask 
+askComments :: (Data topic, Ord topic, SafeCopy topic) => Query (State topic) [CommentList topic]
+askComments =
+    do cls <- commentLists <$> ask
        return (IxSet.toList cls)
 
-askComment :: (Data topic, Ord topic) => CommentId -> Query (State topic) (Maybe Comment)
+askComment :: (Data topic, Ord topic, SafeCopy topic) => CommentId -> Query (State topic) (Maybe Comment)
 askComment cid =
     do cls <- commentLists <$> ask
        case getOne $ cls @= cid of
          Nothing   -> return   Nothing
          (Just cl) -> return $ find (\c -> (commentId c) == cid) (toList (comments cl))
 
-askCommentsOn :: (Data topic, Ord topic) => topic -> Query (State topic) (Maybe (CommentList topic))
+askCommentsOn :: (Data topic, Ord topic, SafeCopy topic) => topic -> Query (State topic) (Maybe (CommentList topic))
 askCommentsOn x =
     do c <- commentLists <$> ask
        return (getOne (c @= x))
 
 -- FIXME: this let's you comment on stories and prompts which have not been created yet
-addComment :: (Data topic, {- Typeable topic, Eq topic, -} Ord topic) => topic -> Comment -> Update (State topic) (Either String Comment)
+addComment :: (Data topic, Ord topic, SafeCopy topic) => {-(SafeCopy topic, Data topic, Ord topic) =>-} topic -> Comment -> Update (State topic) (Either String Comment)
 addComment coid comment =
     do cs <- get
        let cl = case getOne (commentLists cs @= coid) of
@@ -103,9 +105,9 @@ addComment coid comment =
        return (Right comment')
 
 -- FIXME: we do not protect against one user flag some as spam multiple times
-flagComment :: (Data topic, Eq topic, Ord topic) => CommentId -> Update (State topic) ()
+flagComment :: (Data topic, Ord topic) => {-(SafeCopy topic, Data topic, Eq topic, Ord topic) =>-} CommentId -> Update (State topic) ()
 flagComment cid =
-    do cs <- get 
+    do cs <- get
        case getOne $ (commentLists cs) @= cid of
          Nothing -> return ()
          (Just cl) ->
@@ -115,11 +117,12 @@ flagComment cid =
                    do let cl' = cl { comments = Seq.adjust (\c -> c { commentSpaminess = incSpaminess (commentSpaminess c) }) i (comments cl) }
                           cs' = cs { commentLists = IxSet.updateIx (topic cl') cl' (commentLists cs) }
                       put cs'
-                   
-$(makeAcidic ''State 
+
+$(makeAcidic ''State
    [ 'askComment
    , 'askComments
    , 'askCommentsOn
    , 'addComment
    , 'flagComment
    ])
+
