@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
     PackageImports, RankNTypes, TemplateHaskell, TypeFamilies, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 -- This is needed by deriveSafeCopy
+{-# LANGUAGE DatatypeContexts #-}
 {-# OPTIONS -Wall -Wwarn -fno-warn-orphans #-}
 module Scaffolding.Comment.Acid
     ( State(..)
@@ -55,7 +56,7 @@ instance (Data topic, Ord topic) => Indexable (CommentList topic) where
 
 type Comments topic = IxSet (CommentList topic)
 
-data {-(SafeCopy topic, Data topic, Ord topic, Typeable topic) =>-} State topic =
+data (Data topic, Ord topic) => State topic =
     State { commentLists  :: Comments topic
           , nextCommentId :: CommentId
           } deriving (Data, Eq, Ord, Show, Typeable)
