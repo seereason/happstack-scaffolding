@@ -16,8 +16,8 @@ import "mtl" Control.Monad.Trans
 import Control.Monad.Writer (MonadWriter)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
+import Data.UserId (UserId(..))
 import Happstack.Server (Happstack, ToMessage(..), Response, toResponse)
-import Happstack.Auth.Core.Profile   (UserId(..))
 import Happstack.Server.HSP.HTML ()
 import Happstack.Server.SURI ({- instance ToSURI Text -})
 -- import HJScript.Utils ()

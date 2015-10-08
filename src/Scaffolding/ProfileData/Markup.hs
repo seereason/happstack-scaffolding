@@ -6,7 +6,7 @@ module Scaffolding.ProfileData.Markup where
 
 import Control.Monad.Trans (MonadIO)
 import qualified Data.Text.Lazy as TL
-import Happstack.Auth.Core.Profile (UserId(..))
+import Data.UserId (UserId(..))
 import HSP (GenXML, XMLGenerator, EmbedAsAttr(..), StringType, genElement, asChild, Attr((:=)), asAttr, fromStringLit)
 import Scaffolding.MkURL (MkURL(userURL))
 import Scaffolding.ProfileData.User (MonadUserName, userName)
@@ -24,4 +24,4 @@ userLink :: (MonadRoute m, MonadUserName m, MkURL (URL m), XMLGenerator m, Embed
             UserId -> GenXML m
 userLink u =
     do url <- showURL (userURL u)
-       <a href=(TL.fromStrict url)>U<% TL.pack $ show (unUserId u) %></a>
+       <a href=(TL.fromStrict url)>U<% TL.pack $ show (_unUserId u) %></a>

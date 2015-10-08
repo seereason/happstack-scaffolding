@@ -15,9 +15,10 @@ import "mtl" Control.Monad.Trans (MonadIO)
 import Data.Acid (AcidState)
 import Data.Acid.Advanced (query')
 import qualified Data.Text as T
+import Data.UserId (UserId(..))
 import Happstack.Auth.Core.Auth (AuthState)
 import Happstack.Auth.Core.AuthURL (AuthURL(..))
-import Happstack.Auth.Core.Profile (UserId(..), getUserId, ProfileState)
+import Happstack.Auth.Core.Profile (getUserId, ProfileState)
 import Happstack.Server (Happstack, ToMessage(..), escape, toResponse, internalServerError)
 import HSP (XMLGenT(..))
 import qualified Scaffolding.ProfileData.Acid as ProfileData

@@ -7,7 +7,7 @@ import Data.SafeCopy   (base, deriveSafeCopy)
 import Data.Sequence   (Seq)
 import Data.Time       (UTCTime)
 import Data.Text       (Text)
-import Happstack.Auth.Core.Profile (UserId(..))
+import Data.UserId (UserId(..))
 import Test.QuickCheck (Arbitrary)
 import Web.Routes      (PathInfo)
 

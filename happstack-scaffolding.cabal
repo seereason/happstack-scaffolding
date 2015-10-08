@@ -98,6 +98,7 @@ Library
                    unicode-properties,
                    unix,
                    Unixutils,
+                   userid,
                    utf8-string,
                    web-routes >= 0.26.2,
                    web-routes-th,

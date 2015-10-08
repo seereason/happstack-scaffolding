@@ -15,6 +15,7 @@ module Scaffolding.AppConf
 
 import Data.Text (Text, pack)
 import qualified Data.Text.Lazy as TL
+import Data.UserId (UserId(..))
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
 import HSP (GenXML, GenChildList, XMLGenerator, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)

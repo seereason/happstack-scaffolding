@@ -19,7 +19,7 @@ import Data.Typeable (Typeable)
 import qualified Data.Sequence     as Seq
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL
-import Happstack.Auth.Core.Profile (UserId)
+import Data.UserId (UserId)
 import Happstack.Server (Happstack, Response, ok, notFound, ToMessage)
 import HSP (XMLGenerator, GenXML, EmbedAsChild(..), EmbedAsAttr(..), Attr(..), XMLType, StringType, unXMLGenT, genElement, genEElement, fromStringLit)
 import Scaffolding.AppConf (HasAppConf)

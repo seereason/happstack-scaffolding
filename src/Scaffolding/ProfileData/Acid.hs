@@ -31,7 +31,7 @@ import Data.SafeCopy               (base, extension, deriveSafeCopy, Migrate(..)
 import qualified Data.Set          as Set
 import           Data.Set          (Set)
 import Data.Text                   (Text, pack)
-import Happstack.Auth.Core.Profile (UserId(..))
+import Data.UserId (UserId(..))
 import Data.IxSet        ((@=), getOne, inferIxSet, noCalcs)
 import qualified Data.IxSet as IxSet
 

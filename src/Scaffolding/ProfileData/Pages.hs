@@ -13,7 +13,7 @@ import Data.Acid.Advanced (query', update')
 import qualified Data.Set as Set
 import Data.Text                   (Text)
 import qualified Data.Text.Lazy    as TL
-import Happstack.Auth.Core.Profile (UserId(..))
+import Data.UserId (UserId(..))
 import Happstack.Server
 import HSP
 import Scaffolding.AppConf (HasAppConf)
@@ -38,7 +38,7 @@ editProfileDataPage here =
       do userId <- lookUser
          mProfileData <- askAcidProfileData >>= \ state -> query' state (ProfileData.AskRec userId)
          case mProfileData of
-           Nothing -> internalServerErrorPage ("No profile data found for " ++ show (unUserId userId))
+           Nothing -> internalServerErrorPage ("No profile data found for " ++ show (_unUserId userId))
            (Just profileData) ->
                do actionURL    <- showURL here
                   template "edit profile data" () $

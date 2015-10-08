@@ -6,8 +6,8 @@ module Scaffolding.MkURL
 
 import Control.Applicative ((<$>))
 import Data.Data
+import Data.UserId (UserId(..))
 import Happstack.Auth.Core.AuthURL (AuthURL)
-import Happstack.Auth.Core.Profile (UserId(..))
 import Happstack.Auth.Core.ProfileURL (ProfileURL)
 import Test.QuickCheck     (Arbitrary(..),oneof)
 import Web.Routes.TH       (derivePathInfo)

@@ -8,7 +8,8 @@ import Data.Acid.Advanced (update', query')
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL
-import Happstack.Auth.Core.Profile  (UserId(..), getUserId)
+import Data.UserId (UserId(..))
+import Happstack.Auth.Core.Profile  (getUserId)
 import Happstack.Server
 import HSP (EmbedAsAttr, Attr, XMLType)
 import Scaffolding.AppConf (HasAppConf)

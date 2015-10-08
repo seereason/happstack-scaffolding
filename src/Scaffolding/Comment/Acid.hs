@@ -32,7 +32,7 @@ import qualified Data.Sequence as Seq
 import Data.Data               (Data)
 import qualified Data.IxSet    as IxSet
 import           Data.IxSet    ((@=), getOne)
-import Happstack.Auth.Core.Profile (UserId)
+import Data.UserId (UserId)
 import Scaffolding.Comment.Types -- (CommentId, Comments, incSpaminess)
 
 {-
