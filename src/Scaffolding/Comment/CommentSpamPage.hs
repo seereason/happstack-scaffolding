@@ -28,7 +28,7 @@ commentSpamPage :: forall m topic.
                     MonadRender m,
                     AcidComment topic m,
                     EmbedAsAttr m (Attr TL.Text (URL m)),
-                    Data topic, Ord topic, SafeCopy topic) =>
+                    Data topic, Ord topic, SafeCopy topic, Show topic) =>
                    CommentId
                 -> m Response
 commentSpamPage commentId =

@@ -49,7 +49,8 @@ doComment :: forall topic m.
               Data topic,
               Typeable topic,
               Ord topic,
-              SafeCopy topic) =>
+              SafeCopy topic,
+              Show topic) =>
              (UserId -> URL m)
           -> URL m
           -> Comment.URL topic
@@ -134,7 +135,8 @@ commentPage :: (MonadRender m,
                 Data topic,
                 Typeable topic,
                 Ord topic,
-                SafeCopy topic) =>
+                SafeCopy topic,
+                Show topic) =>
                (UserId -> URL m) -> CommentId -> m Response
 commentPage mkUserURL cid =
     do acid <- askAcidComment
@@ -161,7 +163,8 @@ commentBox :: forall m topic. (MonadIO m,
                                EmbedAsAttr m (Attr TL.Text (URL m)),
                                Data topic,
                                Ord topic,
-                               SafeCopy topic) =>
+                               SafeCopy topic,
+                               Show topic) =>
               AcidState (State topic) -> (UserId -> URL m) -> (topic -> Doc) -> String -> topic -> GenXML m
 commentBox acid mkUserURL prettyTopic classes co =
     do comments' <- query' acid (AskCommentsOn co)

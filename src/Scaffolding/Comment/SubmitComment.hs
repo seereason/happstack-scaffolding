@@ -44,7 +44,8 @@ submitCommentPage :: (Happstack m,
                       Data topic,
                       Typeable topic,
                       Ord topic,
-                      SafeCopy topic) =>
+                      SafeCopy topic,
+                      Show topic) =>
                      URL m -> topic -> m Response
 submitCommentPage here coid =
     do actionURL <- showURL here
