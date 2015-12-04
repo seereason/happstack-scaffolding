@@ -149,7 +149,7 @@ lightTemplate' theme mUid title headers extraHeaders body =
           <script type="text/javascript" src="/theme/json2.js" ></script>
           <% widgetHeaders theme %>
           <% headers %>
-          <% extraHeaders %>
+          -- <% extraHeaders %>
           <title><% TL.pack title %></title>
         </head>
         <body>

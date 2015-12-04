@@ -51,7 +51,7 @@ class (XMLGenerator x,
 flattenForm :: (Functor m, Monad m, MonadHeaders IO x) => Form m i e ([HJScript ()], [XMLGenT x (XMLType x)]) a -> Form m i e [XMLGenT x (XMLType x)] a
 flattenForm =
     mapView $ \(js, h:hs) ->
-        (tellHeaders [onReadyXML' js] >> h) : hs
+        ({-tellHeaders [onReadyXML' js mempty] >>-} h) : hs
 
 {-
 
