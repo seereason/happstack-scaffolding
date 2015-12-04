@@ -1,7 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
     PackageImports, RankNTypes, TemplateHaskell, TypeFamilies, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 -- This is needed by deriveSafeCopy
-{-# LANGUAGE DatatypeContexts #-}
 {-# OPTIONS -Wall -Wwarn -fno-warn-orphans #-}
 module Scaffolding.Comment.Acid
     ( State(..)
