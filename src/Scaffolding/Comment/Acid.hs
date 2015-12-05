@@ -1,6 +1,10 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses,
-    PackageImports, RankNTypes, TemplateHaskell, TypeFamilies, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
--- This is needed by deriveSafeCopy
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS -Wall -Wwarn -fno-warn-orphans #-}
 module Scaffolding.Comment.Acid
     ( State(..)
@@ -24,8 +28,9 @@ import Data.IxSet ({-inferIxSet,-} Indexable, IxSet, ixSet, noCalcs, flattenWith
 import Data.IxSet.Ix (Ix(Ix))
 import Data.List               (find)
 import qualified Data.Map as Map
+import Data.SafeCopy           (SafeCopy(..), base, contain, getSafeGet, getSafePut, deriveSafeCopy)
+import Data.Serialize (label)
 import qualified Data.Set as Set
-import Data.SafeCopy           (SafeCopy, base, deriveSafeCopy)
 import Data.Sequence           ((|>))
 import qualified Data.Sequence as Seq
 import Data.Data               (Data)
@@ -55,11 +60,35 @@ instance (Data topic, Ord topic) => Indexable (CommentList topic) where
 
 type Comments topic = IxSet (CommentList topic)
 
-data (Data topic, Ord topic) => State topic =
+data State topic =
     State { commentLists  :: Comments topic
           , nextCommentId :: CommentId
           } deriving (Data, Eq, Ord, Show, Typeable)
+#if 0
+-- Need Data and Ord supers, see safecopy issue #29.
 $(deriveSafeCopy 0 'base ''State)
+#else
+instance (SafeCopy topic, Data topic, Ord topic) => SafeCopy (State topic) where
+      putCopy
+        (State a i)
+        = contain
+            (do { safePut_IxSetCommentListtopictopic_anzo <- getSafePut;
+                  safePut_CommentId_anzp <- getSafePut;
+                  safePut_IxSetCommentListtopictopic_anzo a;
+                  safePut_CommentId_anzp i;
+                  return () })
+      getCopy
+        = contain
+            (label
+               "Scaffolding.Comment.Acid.State:"
+               (do { safeGet_IxSetCommentListtopictopic_anzq <- getSafeGet;
+                     safeGet_CommentId_anzr <- getSafeGet;
+                     (((return State) <*> safeGet_IxSetCommentListtopictopic_anzq)
+                      <*> safeGet_CommentId_anzr) }))
+      version = 0
+      kind = base
+      errorTypeName _ = "Scaffolding.Comment.Acid.State"
+#endif
 
 class AcidComment topic m | m -> topic where
     askAcidComment :: m (AcidState (State topic))
