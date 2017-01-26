@@ -17,10 +17,10 @@ type A = [XML]
 
 type HeadersT = WriterT A
 
-class (MonadWriter A m, Monad v) => MonadHeaders v m | m -> v where
-    liftHeaders :: Monad v => HeadersT v a -> m a
+class MonadWriter A m => MonadHeaders v m | m -> v where
+    liftHeaders :: HeadersT v a -> m a
 
-tellHeaders :: MonadHeaders v m => A -> m ()
+tellHeaders :: (MonadHeaders v m, Monad v) => A -> m ()
 tellHeaders = liftHeaders . tell
 
 listenHeaders :: MonadWriter A m => m a -> m (a, A)

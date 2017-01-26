@@ -1,6 +1,6 @@
 -- |Pages which are not part of our core
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, PackageImports, RankNTypes, ScopedTypeVariables, TypeFamilies, NoMonomorphismRestriction, OverloadedStrings #-}
-{-# OPTIONS -Wwarn -F -pgmFhsx2hs -fcontext-stack=40 -fno-warn-orphans -fno-warn-name-shadowing #-}
+{-# OPTIONS -Wwarn -F -pgmFhsx2hs -freduction-depth=40 -fno-warn-orphans -fno-warn-name-shadowing #-}
 module Scaffolding.Pages.UnicodeKey
     ( unicodeKeyPage
     ) where
@@ -18,7 +18,7 @@ import qualified Scaffolding.Unicode.Render as UR (charsOfInterest)
 import Web.Routes.RouteT (MonadRoute, URL)
 import Web.Routes.XMLGenT ()
 
-unicodeKeyPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m), StringType m ~ TL.Text) => m Response
+unicodeKeyPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) => m Response
 unicodeKeyPage =
     template "Unicode Keys" ([] :: [XML]) text
     where

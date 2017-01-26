@@ -15,13 +15,13 @@ import qualified Data.Foldable     as F
 import Data.Maybe (fromMaybe)
 import Data.SafeCopy (SafeCopy)
 import Data.Time.Clock (diffUTCTime, getCurrentTime)
-import Data.Typeable (Typeable)
+--import Data.Typeable (Typeable)
 import qualified Data.Sequence     as Seq
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL
 import Data.UserId (UserId)
 import Happstack.Server (Happstack, Response, ok, notFound, ToMessage)
-import HSP (XMLGenerator, GenXML, EmbedAsChild(..), EmbedAsAttr(..), Attr(..), XMLType, StringType, unXMLGenT, genElement, genEElement, fromStringLit)
+import HSP (XMLGenerator, GenXML, EmbedAsChild(..), EmbedAsAttr(..), Attr(..), XML, XMLType, StringType, unXMLGenT, genElement, genEElement, fromStringLit)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Comment.Acid (State, AcidComment(askAcidComment), AskComment(..), AskCommentsOn(..))
 import Scaffolding.Comment.CommentSpamPage (commentSpamPage)
@@ -39,6 +39,7 @@ doComment :: forall topic m.
              (Happstack m,
               MonadRoute m,
               ToMessage (XMLType m),
+              XMLType m ~ XML,
               MonadUserName m,
               MonadRender m,
               HasAppConf m,
@@ -47,7 +48,6 @@ doComment :: forall topic m.
               EmbedAsAttr m (Attr TL.Text (URL m)),
               EmbedAsChild m TextHtml,
               Data topic,
-              Typeable topic,
               Ord topic,
               SafeCopy topic,
               Show topic) =>
@@ -69,8 +69,7 @@ commentXML :: forall m topic.
                EmbedAsChild m TextHtml,
                EmbedAsChild m Text.Text,
                EmbedAsAttr m (Attr TL.Text (URL m)),
-               MonadIO m,
-               Functor m) =>
+               MonadIO m) =>
               (UserId -> URL m) -> Comment -> GenXML m
 commentXML mkUserURL comment =
     do acid <- askAcidProfileData
@@ -101,7 +100,6 @@ commentXML mkUserURL comment =
         </li>
 
 commentsXML :: (MonadIO m,
-                Functor m,
                 MonadUserName m,
                 Comment.MkURL topic (URL m),
                 -- XMLType m ~ TextHtml,
@@ -123,7 +121,6 @@ commentsXML mkUserURL (Just (CommentList _commentingOn comments))
 
 commentPage :: (MonadRender m,
                 ToMessage (XMLType m),
-                StringType m ~ TL.Text,
                 MonadUserName m,
                 Happstack m,
                 MonadRoute m,
@@ -133,7 +130,6 @@ commentPage :: (MonadRender m,
                 EmbedAsAttr m (Attr TL.Text (URL m)),
                 EmbedAsChild m TextHtml,
                 Data topic,
-                Typeable topic,
                 Ord topic,
                 SafeCopy topic,
                 Show topic) =>

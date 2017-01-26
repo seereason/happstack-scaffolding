@@ -9,4 +9,4 @@ module Scaffolding.MonadStack.Acid
 import Control.Monad.Reader (ReaderT)
 
 class Monad v => MonadAcid acid v m | m -> v where
-    liftAcid :: Monad v => ReaderT acid v a -> m a
+    liftAcid :: ReaderT acid v a -> m a

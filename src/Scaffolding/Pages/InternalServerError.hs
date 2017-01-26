@@ -12,7 +12,15 @@ import Scaffolding.Pages.AppTemplate (MonadRender, template)
 import Scaffolding.ProfileData.User (MonadUser)
 import Web.Routes.RouteT (MonadRoute, URL)
 
-internalServerErrorPage :: (Happstack m, MonadRoute m, MonadUser m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) => String -> m Response
+internalServerErrorPage ::
+    ( Happstack m
+    , MonadRoute m
+    , MonadUser m
+    , MonadRender m
+    , HasAppConf m
+    , EmbedAsAttr m (Attr TL.Text (URL m))
+    , ToMessage (XMLType m)
+    ) => String -> m Response
 internalServerErrorPage msg =
     do unauthorized =<< template "Internal Server Error" ()
           <div id="main">

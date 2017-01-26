@@ -18,7 +18,8 @@ import qualified Data.Text.Lazy as TL
 import Data.UserId (UserId(..))
 import Happstack.Auth.Core.Profile
 import Happstack.Server (Conf(validator, port), nullConf)
-import HSP (GenXML, GenChildList, XMLGenerator, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)
+import HSP (XML, GenXML, GenChildList, XMLGenerator, EmbedAsAttr, Attr(..), StringType, asChild, asAttr, genElement, fromStringLit)
+import HSP.XMLGenerator (XMLType)
 import HSP.Google.Analytics (UACCT)
 -- import Language.HJavaScript.Syntax (Block)
 import System.Console.GetOpt (ArgDescr(..), ArgOrder(..), OptDescr(..), getOpt, usageInfo)
@@ -102,6 +103,7 @@ data Menu url = Menu (MenuItem url)
 menuBar :: ( XMLGenerator m
            , EmbedAsAttr m (Attr TL.Text a)
            , StringType m ~ TL.Text
+           , XMLType m ~ XML
            ) =>
            [Menu a] -> GenXML m
 menuBar [] = <div id="menubar"></div>

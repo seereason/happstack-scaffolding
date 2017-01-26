@@ -6,7 +6,7 @@ module Scaffolding.Pages.Unauthorized
 
 import qualified Data.Text.Lazy as TL
 import Happstack.Server (Happstack, Response, unauthorized, ToMessage)
-import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XMLType, genElement, fromStringLit)
+import HSP (Attr(..), EmbedAsAttr(..), EmbedAsChild(..), XML, XMLType, genElement, fromStringLit)
 import Scaffolding.AppConf (HasAppConf)
 import Scaffolding.Pages.AppTemplate (MonadRender, template)
 import Scaffolding.ProfileData.User (MonadUser)
@@ -19,8 +19,9 @@ unauthorizedPage :: (Happstack m,
                      MonadRender m,
                      HasAppConf m,
                      EmbedAsAttr m (Attr TL.Text (URL m)),
-                     ToMessage (XMLType m)) =>
-                    String -> m Response
+                     ToMessage (XMLType m),
+                     XMLType m ~ XML
+                    ) => String -> m Response
 unauthorizedPage msg =
     do unauthorized =<< template "Unauthorized" ()
           <div id="main">

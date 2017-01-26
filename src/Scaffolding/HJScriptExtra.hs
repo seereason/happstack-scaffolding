@@ -71,7 +71,7 @@ instance IsContent ElementNode
 instance IsContent JQuery
 instance IsContent String
 
-jBefore :: (IsContent c) => (Exp c) -> JObject JQuery -> JObject JQuery
+jBefore :: Exp c -> JObject JQuery -> JObject JQuery
 jBefore content = callMethod "before" content
 
 
@@ -105,7 +105,7 @@ jPreventDefault = callVoidMethod "preventDefault"
 remove :: JObject JQuery -> JObject JQuery
 remove = callMethod "remove" ()
 
-jData :: (IsJString name, JType a) => name -> JObject JQuery -> Exp a
+jData :: IsJString name => name -> JObject JQuery -> Exp a
 jData name = callMethod "data" (toJString name)
 
 jSetData :: (IsJString name, Args (JString, a) t) => (name , a) -> JObject JQuery -> JObject JQuery
@@ -145,7 +145,7 @@ toArray = callMethod "sortable" (string "toArray")
 stringify :: (Args a t) => a -> Exp String
 stringify = call (JConst "JSON.stringify")
 
-parseJSON :: (Args str t, IsJString str) => str -> Exp a
+parseJSON :: (Args str t) => str -> Exp a
 parseJSON = call (JConst "JSON.parse")
 
 -- click :: 

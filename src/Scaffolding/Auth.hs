@@ -19,7 +19,7 @@ import Happstack.Auth.Core.ProfileURL (ProfileURL(P_PickProfile))
 import Happstack.Auth.Blaze.Templates   (handleAuth, handleProfile)
 import Happstack.Server (Happstack, Response, escape, ToMessage)
 -- ximport HJScript.Utils ()
-import HSP hiding (escape)
+import HSP
 import Scaffolding.AppConf (HasAppConf(askAppConf), AppConf(facebook))
 import Scaffolding.MonadStack.Route (MonadRoute'(liftRoute, unRoute))
 import Scaffolding.Pages.AppTemplate (MonadRender, template)
@@ -37,10 +37,7 @@ import Web.Routes.RouteT (URL, liftRouteT)
 import Web.Routes.XMLGenT (unUChild)
 
 doAuth :: forall m v weburl.
-          (URL (m weburl) ~ weburl,
-           URL (m AuthURL) ~ AuthURL,
-           XMLType (m weburl) ~ XML,
-           Happstack (m AuthURL),
+          (Happstack (m AuthURL),
            MonadRoute (m AuthURL),
            MonadRoute' weburl v (m weburl),
            MonadRoute' AuthURL v (m AuthURL),
@@ -48,13 +45,14 @@ doAuth :: forall m v weburl.
            MonadUserName (m weburl),
            MonadRoute (m weburl),
            MkURL weburl,
-           EmbedAsChild (m weburl) XML,
            MonadRender (m weburl),
            ToMessage (XMLType (m weburl)),
            Happstack (m weburl),
            EmbedAsAttr (m weburl) (Attr TL.Text weburl),
-           Monad v, Functor v) =>
-          Maybe Text -> AuthURL -> m weburl Response
+           URL (m weburl) ~ weburl,
+           URL (m AuthURL) ~ AuthURL,
+           Monad v
+          ) =>  Maybe Text -> AuthURL -> m weburl Response
 doAuth realm url =
     do conf <- askAppConf
        acidAuth <- askAcidAuth
@@ -84,7 +82,7 @@ doProfile :: forall m v weburl.
               MonadRoute (m weburl),
               MonadRoute' weburl v (m weburl),
               MonadRoute' ProfileURL v (m ProfileURL),
-              Monad v, Functor v) =>
+              Monad v) =>
              AcidState AuthState
           -> AcidState ProfileState
           -> ProfileURL
@@ -127,8 +125,8 @@ requiresRole :: (URL m ~ weburl,
                  MonadRoute m,
                  HasAppConf m,
                  EmbedAsAttr m (Attr TL.Text weburl),
-                 ToMessage (XMLType m)) =>
-                ProfileData.Role -> weburl -> m weburl
+                 ToMessage (XMLType m)
+                ) => ProfileData.Role -> weburl -> m weburl
 requiresRole role url =
     do mu <- lookMaybeUserId
        case mu of
@@ -143,20 +141,18 @@ requiresRole role url =
 urlTemplate :: forall headers body authurl weburl v m.
                (EmbedAsChild (RouteT authurl v) headers,
                 EmbedAsChild (RouteT authurl v) body,
-                EmbedAsChild (m weburl) XML,
                 MonadRoute' weburl v (m weburl),
                 MonadRoute' authurl v (m authurl),
                 MonadRender (m weburl),
                 HasAppConf (m weburl),
                 ToMessage (XMLType (m weburl)),
+                -- XMLType (m weburl) ~ TL.Text,
                 MonadUser (m weburl),
                 Happstack (m weburl),
                 MonadRoute (m weburl),
-                EmbedAsAttr (m weburl) (Attr TL.Text weburl),
                 EmbedAsAttr (m weburl) (Attr TL.Text (URL (m weburl))),
                 Monad (m authurl),
-                Monad v,
-                Functor v) =>
+                Monad v) =>
                (weburl -> [(Text, Maybe Text)] -> Text)
             -> String
             -> body

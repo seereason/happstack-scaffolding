@@ -43,7 +43,8 @@ class (Functor x,
        EmbedAsAttr x (Attr String T.Text),
 --       EmbedAsAttr x (Attr String Id),
        XMLGenerator x,
-       StringType x ~ TL.Text
+       StringType x ~ TL.Text,
+       XMLType x ~ XML
 --       Widgets x
        ) => MonadRender x
 
@@ -55,11 +56,12 @@ template :: (HasAppConf m,
              XMLGenerator m,
              EmbedAsAttr m (Attr TL.Text (URL m)),
              EmbedAsChild m headers,
-             EmbedAsChild m XML,
-             EmbedAsChild m [XML],
---             EmbedAsChild m (Block ()),
+             -- EmbedAsChild m XML,
+             -- EmbedAsChild m [XML],
+             -- EmbedAsChild m (Block ()),
              EmbedAsChild m body,
              MonadWriter [XML] m,
+             XMLType m ~ XML,
              StringType m ~ TL.Text
              ) =>
             String -> headers -> body -> m Response
@@ -76,11 +78,12 @@ template' :: ( Happstack m
              , HasAppConf m
              , EmbedAsChild m body
              , EmbedAsChild m headers
---             , EmbedAsChild m (Block ())
-             , EmbedAsChild m XML
-             , EmbedAsChild m [XML]
+             -- , EmbedAsChild m (Block ())
+             -- , EmbedAsChild m XML
+             -- , EmbedAsChild m [XML]
              , EmbedAsAttr m (Attr TL.Text (URL m))
              , StringType m ~ TL.Text
+             , XMLType m ~ XML
              ) =>
              Theme m
           -> String
@@ -98,14 +101,14 @@ lightTemplate :: ( ToMessage (XMLType m)
                  , EmbedAsAttr m (Attr TL.Text (URL m))
                  , MonadRoute m
                  , HasAppConf m
-                 , Functor m
                  , EmbedAsChild m headers
-                 , EmbedAsChild m extraHeaders
+                 -- , EmbedAsChild m extraHeaders
                  , EmbedAsChild m body
---                 , EmbedAsChild m (Block ())
-                 , EmbedAsChild m [XML]
-                 , EmbedAsChild m XML
+                 -- , EmbedAsChild m (Block ())
+                 -- , EmbedAsChild m [XML]
+                 -- , EmbedAsChild m XML
                  , StringType m ~ TL.Text
+                 , XMLType m ~ XML
                  ) =>
                  Maybe UserId
               -> String
@@ -123,12 +126,13 @@ lightTemplate' :: ( MonadRoute m
                   , XMLGenerator m
                   , EmbedAsAttr m (Attr TL.Text (URL m))
                   , EmbedAsChild m headers
-                  , EmbedAsChild m extraheaders
+                  -- , EmbedAsChild m extraheaders
                   , EmbedAsChild m body
 --                  , EmbedAsChild m (Block ())
-                  , EmbedAsChild m XML
-                  , EmbedAsChild m [XML]
+                  -- , EmbedAsChild m XML
+                  -- , EmbedAsChild m [XML]
                   , StringType m ~ TL.Text
+                  , XMLType m ~ XML
                   ) =>
                   Theme m
                -> Maybe UserId
@@ -167,7 +171,7 @@ twoColumn :: forall (m :: * -> *) c c1 c2 c3.
               EmbedAsChild m c3,
               EmbedAsChild m c,
               EmbedAsChild m (XMLType m),
-              StringType m ~ TL.Text) =>
+              StringType m ~ TL.Text, XMLType m ~ XML) =>
              c -> c3 -> c1 -> c2 -> [GenXML m]
 twoColumn header footer left right =
     [<div id="two-column">

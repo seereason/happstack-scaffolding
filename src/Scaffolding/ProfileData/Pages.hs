@@ -8,7 +8,7 @@ module Scaffolding.ProfileData.Pages
 
 import Control.Applicative         ((<$>), (<*), (<*>))
 import Control.Monad               (when)
-import Control.Monad.Trans (MonadIO)
+--import Control.Monad.Trans (MonadIO)
 import Data.Acid.Advanced (query', update')
 import qualified Data.Set as Set
 import Data.Text                   (Text)
@@ -31,7 +31,7 @@ import Text.Digestive.Types (Form)
 import Web.Routes.RouteT (MonadRoute, URL)
 import Web.Routes                  (showURL)
 
-editProfileDataPage :: forall m. (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadIO m, MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) =>
+editProfileDataPage :: forall m. (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) =>
                        URL m -> m Response
 editProfileDataPage here =
     requireSession $
@@ -66,7 +66,7 @@ editProfileDataPage here =
                <p>profile updated.</p>
               </div>
 
-editProfileDataForm :: MonadRender m => Maybe Text -> Maybe Text -> Bool -> Set.Set ProfileData.Role -> FormDF m (Text, Maybe Text, Bool, Bool)
+editProfileDataForm :: (MonadRender m) => Maybe Text -> Maybe Text -> Bool -> Set.Set ProfileData.Role -> FormDF m (Text, Maybe Text, Bool, Bool)
 editProfileDataForm username email optOut roles =
     fieldset $ ol $
      ((,,,) <$> (li $ (label (TL.pack "your name: ")  ++> inputText username))
@@ -75,7 +75,7 @@ editProfileDataForm username email optOut roles =
             <*> (li $ (inputCheckBox (Set.member ProfileData.User roles)  <++ label (TL.pack "add to User group.")))
             <*  (li $ submit "update"))
 
-editUserNamePage :: (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m), StringType m ~ TL.Text) =>
+editUserNamePage :: (Happstack m, MonadRoute m, MonadUserName m, MkURL (URL m), MonadRender m, HasAppConf m, EmbedAsAttr m (Attr TL.Text (URL m)), ToMessage (XMLType m)) =>
                     URL m -> m Response
 editUserNamePage here =
     requireSession $
@@ -96,7 +96,7 @@ editUserNamePage here =
                <p>Username updated to <% name %></p>
               </div>
 
-editUserNameForm :: (FormInput i f, XMLGenerator x, Functor m, Monad m, StringType x ~ TL.Text) =>
+editUserNameForm :: (FormInput i f, XMLGenerator x, Monad m, StringType x ~ TL.Text) =>
                     Maybe Text -> Form m i e [GenXML x] Text
 editUserNameForm mUsername =
     (label (TL.pack "your name: ") ++> inputText mUsername) <* submit "change name"

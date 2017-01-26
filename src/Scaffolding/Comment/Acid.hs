@@ -22,20 +22,18 @@ import Control.Applicative     ((<$>))
 import "mtl" Control.Monad.Reader    (MonadReader(ask))
 import "mtl" Control.Monad.State     (MonadState(get,put))
 import Data.Acid               (AcidState, Update, Query, makeAcidic)
-import Data.Data               (Typeable)
+import Data.Data               (Data, Typeable)
 import Data.Foldable           (toList)
-import Data.IxSet ({-inferIxSet,-} Indexable, IxSet, ixSet, noCalcs, flattenWithCalcs)
+import Data.IxSet ((@=), getOne, {-inferIxSet,-} Indexable, IxSet, ixSet, noCalcs, flattenWithCalcs)
+import qualified Data.IxSet    as IxSet
 import Data.IxSet.Ix (Ix(Ix))
 import Data.List               (find)
 import qualified Data.Map as Map
 import Data.SafeCopy           (SafeCopy(..), base, contain, getSafeGet, getSafePut, deriveSafeCopy)
-import Data.Serialize (label)
-import qualified Data.Set as Set
 import Data.Sequence           ((|>))
 import qualified Data.Sequence as Seq
-import Data.Data               (Data)
-import qualified Data.IxSet    as IxSet
-import           Data.IxSet    ((@=), getOne)
+import Data.Serialize (label)
+import qualified Data.Set as Set
 import Data.UserId (UserId)
 import Scaffolding.Comment.Types -- (CommentId, Comments, incSpaminess)
 
@@ -99,25 +97,25 @@ initial
             , nextCommentId = CommentId 1
             }
 
-askComments :: (Data topic, Ord topic, SafeCopy topic, Show topic) => Query (State topic) [CommentList topic]
+askComments :: Ord topic => Query (State topic) [CommentList topic]
 askComments =
     do cls <- commentLists <$> ask
        return (IxSet.toList cls)
 
-askComment :: (Data topic, Ord topic, SafeCopy topic, Show topic) => CommentId -> Query (State topic) (Maybe Comment)
+askComment :: (Data topic, Ord topic) => CommentId -> Query (State topic) (Maybe Comment)
 askComment cid =
     do cls <- commentLists <$> ask
        case getOne $ cls @= cid of
          Nothing   -> return   Nothing
          (Just cl) -> return $ find (\c -> (commentId c) == cid) (toList (comments cl))
 
-askCommentsOn :: (Data topic, Ord topic, SafeCopy topic, Show topic) => topic -> Query (State topic) (Maybe (CommentList topic))
+askCommentsOn :: (Data topic, Ord topic) => topic -> Query (State topic) (Maybe (CommentList topic))
 askCommentsOn x =
     do c <- commentLists <$> ask
        return (getOne (c @= x))
 
 -- FIXME: this let's you comment on stories and prompts which have not been created yet
-addComment :: (Data topic, Ord topic, SafeCopy topic, Show topic) => {-(SafeCopy topic, Data topic, Ord topic) =>-} topic -> Comment -> Update (State topic) (Either String Comment)
+addComment :: (Data topic, Ord topic) => topic -> Comment -> Update (State topic) (Either String Comment)
 addComment coid comment =
     do cs <- get
        let cl = case getOne (commentLists cs @= coid) of
@@ -133,7 +131,7 @@ addComment coid comment =
        return (Right comment')
 
 -- FIXME: we do not protect against one user flag some as spam multiple times
-flagComment :: (Data topic, Ord topic, Show topic) => {-(SafeCopy topic, Data topic, Eq topic, Ord topic) =>-} CommentId -> Update (State topic) ()
+flagComment :: (Data topic, Ord topic) => CommentId -> Update (State topic) ()
 flagComment cid =
     do cs <- get
        case getOne $ (commentLists cs) @= cid of

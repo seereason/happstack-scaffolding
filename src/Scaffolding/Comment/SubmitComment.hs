@@ -40,9 +40,9 @@ submitCommentPage :: (Happstack m,
                       Comment.MkURL topic (URL m),
                       EmbedAsAttr m (Attr TL.Text (URL m)),
                       ToMessage (XMLType m),
-                      EmbedAsChild m TextHtml,
+                      -- EmbedAsChild m TextHtml,
                       Data topic,
-                      Typeable topic,
+                      -- Typeable topic,
                       Ord topic,
                       SafeCopy topic,
                       Show topic) =>
@@ -65,14 +65,14 @@ submitCommentPage here coid =
                 <% formXML %>
                </div>
 
-submitCommentForm :: (Happstack m, MonadRoute m, MonadRender m, MonadUser m) => FormDF m Comment
+submitCommentForm :: (Happstack m, {-MonadRoute m,-} MonadRender m, MonadUser m) => FormDF m Comment
 submitCommentForm =
     fieldset (errors ++> (ol $ msg <* submitBtn))
     `transform`
     (transformEitherM toComment)
     where
       -- validators
-      notEmptyText :: (Happstack m, MonadRoute m, MonadRender m) => FormDF m Text -> FormDF m Text
+      notEmptyText :: (Happstack m, {-MonadRoute m,-} MonadRender m) => FormDF m Text -> FormDF m Text
       notEmptyText f = errors ++> (f `validate` (check "surely you have more to say than that.") (not . Text.null))
 
       -- fields
@@ -80,7 +80,7 @@ submitCommentForm =
       submitBtn = li $ submit "Submit Comment" `setAttrs` [("class" := "submit") :: Attr TL.Text TL.Text]
 
       -- transformer
-      toComment :: (Happstack m, MonadRoute m, MonadRender m, MonadUser m) => Text -> m (Either String Comment)
+      toComment :: (Happstack m, MonadUser m) => Text -> m (Either String Comment)
       toComment txt =
           do acidAuth <- askAcidAuth
              acidProfile <- askAcidProfile

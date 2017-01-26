@@ -13,14 +13,14 @@ import Scaffolding.ProfileData.User (MonadUserName, userName)
 import Web.Routes (showURL)
 import Web.Routes.RouteT (MonadRoute, URL)
 
-userMarkup :: (MonadRoute m, MonadUserName m, MkURL (URL m), MonadIO m, XMLGenerator m, EmbedAsAttr m (Attr TL.Text TL.Text), StringType m ~ TL.Text) =>
+userMarkup :: (MonadRoute m, MonadUserName m, MkURL (URL m), MonadIO m, XMLGenerator m, StringType m ~ TL.Text) =>
               UserId -> GenXML m
 userMarkup u =
     do name <- userName u
        link <- userLink u
        <span><% link %>:<% either (TL.pack . show) TL.fromStrict name %></span>
 
-userLink :: (MonadRoute m, MonadUserName m, MkURL (URL m), XMLGenerator m, EmbedAsAttr m (Attr TL.Text TL.Text), StringType m ~ TL.Text) =>
+userLink :: (MonadRoute m, MkURL (URL m), XMLGenerator m, StringType m ~ TL.Text) =>
             UserId -> GenXML m
 userLink u =
     do url <- showURL (userURL u)

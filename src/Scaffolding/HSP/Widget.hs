@@ -14,10 +14,10 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text.Lazy as TL
 import HSP.Monad
-import HSP.XMLGenerator hiding (onClick)
-import HSP.HTML4 (renderAsHTML)
+import HSP.XMLGenerator -- (XMLGenT, XMLGenerator, XMLGen, SetAttr, XMLType, AppendChild, EmbedAsChild, EmbedAsAttr, Attr, StringType, GenXML)
+-- import HSP.HTML4 (renderAsHTML)
 import qualified HSP.XML as HSP
-import HJScript (HJScript'(..), JShow, HasConstructor, Array(Array), Args, Exp(..), HJScript, IsClass, JBool, JInt, JObject(..), JString, JType, Var, Object(..), Rec(..), ( # ), (#!), (.=.), (.-.), (.+.), (?), (.==.), first, second, call, callProc, callMethod, callVoidMethod, evalHJScript, false, function, functionDecl, inVar, jShow, new, push, string, this, derefVar, procedureDecl, val, postinc, int, varWith, propertyVar, forIn, arrLength, delete, procedure, deref, true, false, foreach, for, outputBlock, jshow, runHJScript, doIfNoElse)
+import HJScript (HJScript', JShow, HasConstructor, Array(Array), Exp(..), HJScript, IsClass, JBool, JInt, JObject, JString, JType, Var, Object(..), Rec, ( # ), (#!), (.=.), (.-.), (.+.), (?), (.==.), first, second, call, callMethod, callVoidMethod, evalHJScript, false, function, functionDecl, inVar, jShow, new, push, string, this, derefVar, procedureDecl, val, postinc, int, varWith, propertyVar, forIn, arrLength, delete, procedure, deref, true, false, foreach, for, outputBlock, jshow, runHJScript, doIfNoElse)
 -- import HJScript.DOM ({-alert, document, window-})
 import HJScript.XMLGenerator (fromStringLit)
 import HJScript.DOM hiding (Object, Form)
@@ -27,7 +27,7 @@ import HJScript.Objects.JQuery (JQuery, append, jSetText, jVal, selectExpr, runE
 import Happstack.Server (ServerPartT)
 import HSP.ServerPartT ()
 import Scaffolding.HJScriptExtra
-import Scaffolding.MonadStack.Headers (MonadHeaders, tellHeaders)
+import Scaffolding.MonadStack.Headers (MonadHeaders)
 import Text.JSON (JSON, Result(Ok, Error), decode {-, encode-})
 import Text.Digestive (Form, transform, transformEither, mapView)
 import Text.Digestive.Forms (FormInput, inputString)
@@ -48,7 +48,7 @@ class (XMLGenerator x,
        ) => WidgetGenerator x
 
 -- this is pretty wacky
-flattenForm :: (Functor m, Monad m, MonadHeaders IO x) => Form m i e ([HJScript ()], [XMLGenT x (XMLType x)]) a -> Form m i e [XMLGenT x (XMLType x)] a
+flattenForm :: Monad m => Form m i e ([HJScript ()], [XMLGenT x (XMLType x)]) a -> Form m i e [XMLGenT x (XMLType x)] a
 flattenForm =
     mapView $ \(js, h:hs) ->
         ({-tellHeaders [onReadyXML' js mempty] >>-} h) : hs
@@ -362,7 +362,7 @@ jDisconnect _ _ = error "jDisconnect"
 
 -- | send the 'msg' to the 'Out a'. This will cause any 'In a' which
 -- have been 'connect'ed to receive the message.
-sendMsg :: (JType a, Show a) => (Out a) -> (Exp a) -> HJScript ()
+sendMsg :: Out a -> Exp a -> HJScript ()
 sendMsg (Out oId) msg =
   do args <- new Array ()
      args # push msg
@@ -373,7 +373,7 @@ sendMsg (Out oId) msg =
 --
 -- similar in concept to 'fmap'. See also, 'widgetMap'
 -- NOTE TO SELF: this is almost an arrow, except we have, Exp (a -> b) instead of a -> b
-widgetMap_ :: (NextId (Widget m), Show a, JType a, Show b, JType b) => Exp (a -> b) -> Widget m (In a, Out b)
+widgetMap_ :: (NextId (Widget m), JType a) => Exp (a -> b) -> Widget m (In a, Out b)
 widgetMap_ f =
     do iId      <- In  <$> nextId
        oId      <- Out <$> nextId
@@ -385,7 +385,7 @@ widgetMap_ f =
 -- This just calls 'widgetMap_', but has a different type siganture which is sometimes more convenient.
 --
 -- similar in concept to 'fmap'. See also, 'widgetMap_'
-widgetMap :: (NextId (Widget m), Show a, JType a, Show b, JType b) => Exp (a -> b) -> (Out a) -> Widget m (Out b)
+widgetMap :: (NextId (Widget m), Show a, JType a) => Exp (a -> b) -> (Out a) -> Widget m (Out b)
 widgetMap f oIda =
     do (iIda, oIdb) <- widgetMap_ f
        connect oIda iIda
@@ -396,7 +396,7 @@ widgetMap f oIda =
 -- | this 'Widget' listens to multiple 'Widgets' and copies a message
 -- sent by any of those 'Widgets' to it's output. Effectively merges
 -- all their output into a single output.
-mergeOuts :: forall a m. (Show a, JType a, NextId (Widget m)) => [Out a] -> Widget m (Out a)
+mergeOuts :: forall a m. (JType a, NextId (Widget m)) => [Out a] -> Widget m (Out a)
 mergeOuts outs =
   do outId <- nextId
      js $ do trigger <- function $ \(event :: Exp JEvent, msg :: Exp a) ->
@@ -433,7 +433,7 @@ submit val =
 -- The first argument of the tuple is the
 -- label to show in the dropdown. The second argument is the message
 -- to send when the item is selected.
-select :: (Show a, JType a, StringType m ~ TL.Text, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m)) => String -> [(String, Exp a)] -> Widget m (Out a)
+select :: (StringType m ~ TL.Text, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m)) => String -> [(String, Exp a)] -> Widget m (Out a)
 select title vals =
   do oId <- Out <$> nextId
      html $ let fromStringLit = HSP.fromStringLit in <select id=(getId oId) />
@@ -462,7 +462,7 @@ select title vals =
      return oId
 
 -- | a helper function for creating a widget which response to an incoming event by producing an output string.
-input' :: (XMLGenerator m, Functor m, NextId (Widget m))
+input' :: (NextId (Widget m))
           => (Id -> GenXML m) -- ^ takes a unique id and generates the HTML
           -> (Id -> HJScript (Exp (() -> String))) -- ^ takes the same unique id and returns a javascript function which can be used to extract the string value of the widget
           -> Widget m (In String, Out String)
@@ -478,7 +478,7 @@ input' genHtml getString =
 
 -- | a text input field widget
 -- TODO: pressing enter should submit widget ?
-input :: (NextId (Widget m), XMLGenerator m, Functor m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), EmbedAsAttr m (Attr String a), StringType m ~ String)
+input :: (NextId (Widget m), XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsAttr m (Attr String String), EmbedAsAttr m (Attr String a), StringType m ~ String)
          => a -- ^ initial value of the text field
          -> Widget m (In String, Out String)
 input v =
@@ -489,7 +489,7 @@ input v =
                return (e # jVal))
 
 -- | a text area widget
-textarea :: (Functor m, XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsChild m a, NextId (Widget m), StringType m ~ String)
+textarea :: (XMLGenerator m, EmbedAsAttr m (Attr String Id), EmbedAsChild m a, NextId (Widget m), StringType m ~ String)
             => a  -- ^ initial value of the text field
             -> Widget m (In String, Out String)
 textarea v =
@@ -682,7 +682,7 @@ dynListWidget =
      return iId
 -}
 -- | A 'widget' which listens for a 'String' and sends an <li> element which contains that string
-listItem :: (XMLGenerator m, NextId (Widget m)) => Widget m (In String, Out ElementNode)
+listItem :: (NextId (Widget m)) => Widget m (In String, Out ElementNode)
 listItem =
   do iId <- In  <$> nextId
      oId <- Out <$> nextId
@@ -717,7 +717,7 @@ widgetList =
      return (iId, oId)
 
 -- | similar to 'widgetList' except that instead of merging the outputs, it outputs an array containing the last message sent by each element of the list.
-widgetList3 :: forall m a. (Show a, JType a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), EmbedAsAttr m (Attr TL.Text TL.Text), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JWidget (Out a)), Out (Array a))
+widgetList3 :: forall m a. (Show a, JType a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JWidget (Out a)), Out (Array a))
 widgetList3 =
   do iId      <- In  <$> nextId
      oId      <- Out <$> nextId
@@ -879,7 +879,7 @@ constructor make =
 -- Another set of functions for a widget similar to paragraphWidget
 
 -- A widget which receives a message and shows it in a paragraph tag
-outputToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JToggle (Rec Int a)))
+outputToggle :: forall a m. (JShow a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JToggle (Rec Int a)))
 outputToggle =
   do i <- In <$> nextId
      html $ let fromStringLit = HSP.fromStringLit in <p id=(getId i) />
@@ -897,7 +897,7 @@ outputToggle =
      return i
 
 -- A widget which receives a message and shows it in a paragraph tag
-outputMultiToggle :: forall a m. (JType a, JShow a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), EmbedAsAttr m (Attr TL.Text TL.Text), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JToggle (Rec Int a)))
+outputMultiToggle :: forall a m. (JShow a, XMLGenerator m, EmbedAsAttr m (Attr TL.Text Id), NextId (Widget m), StringType m ~ TL.Text) => Widget m (In (JToggle (Rec Int a)))
 outputMultiToggle =
   do i <- In <$> nextId
      html $ let fromStringLit = HSP.fromStringLit in <p class="subjects" id=(getId i) />
@@ -1079,7 +1079,7 @@ class JSONCast a where
 --    type AsJSON    a
 
 
-instance (JSONCast a) => JSONCast (Array a) where
+instance JSONCast (Array a) where
     type AsHaskell (Array a) = [AsHaskell a]
 
 
@@ -1087,19 +1087,20 @@ instance (JSONCast a) => JSONCast (Array a) where
 widgetToForm ::
     ( XMLGenerator m
     , StringType m ~ TL.Text
-    , Functor v
+    -- , Functor v
     , Monad v
     , FormInput i f
     , EmbedAsAttr m (Attr TL.Text Id)
-    , EmbedAsAttr m (Attr TL.Text TL.Text)
+    -- , EmbedAsAttr m (Attr TL.Text TL.Text)
     , NextId (Widget m)
-    , Functor m
-    , Monad m
+    -- , Functor m
+    -- , Monad m
     , JSON (AsHaskell a)
 --    , JShow a
     , Show a
     , JType a
-    , JSONCast a) => String -> Widget m (In String, Out a) -> Form v i  [String] ([HJScript ()],[GenXML m]) (AsHaskell a)
+    -- , JSONCast a
+    ) => String -> Widget m (In String, Out a) -> Form v i  [String] ([HJScript ()],[GenXML m]) (AsHaskell a)
 widgetToForm prefix widget =
     (inputString (\n mv -> snd $ runWidget (prefix ++ show n) 0 $
                            do -- js $ window # alert (string "init widget")
