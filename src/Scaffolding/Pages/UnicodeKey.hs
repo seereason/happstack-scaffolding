@@ -1,6 +1,6 @@
 -- |Pages which are not part of our core
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, PackageImports, RankNTypes, ScopedTypeVariables, TypeFamilies, NoMonomorphismRestriction, OverloadedStrings #-}
-{-# OPTIONS -Wwarn -F -pgmFhsx2hs -freduction-depth=40 -fno-warn-orphans -fno-warn-name-shadowing #-}
+{-# OPTIONS -Wwarn -F -pgmFhsx2hs -fno-warn-orphans -fno-warn-name-shadowing #-}
 module Scaffolding.Pages.UnicodeKey
     ( unicodeKeyPage
     ) where
