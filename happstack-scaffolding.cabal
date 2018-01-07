@@ -62,7 +62,6 @@ Library
                    digestive-functors-happstack,
                    digestive-functors-hsp,
                    directory,
-                   fb,
                    fgl,
                    filepath,
                    happstack-auth < 2,

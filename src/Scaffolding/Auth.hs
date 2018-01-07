@@ -20,7 +20,7 @@ import Happstack.Auth.Blaze.Templates   (handleAuth, handleProfile)
 import Happstack.Server (Happstack, Response, escape, ToMessage)
 -- ximport HJScript.Utils ()
 import HSP
-import Scaffolding.AppConf (HasAppConf(askAppConf), AppConf(facebook))
+import Scaffolding.AppConf (HasAppConf(askAppConf))
 import Scaffolding.MonadStack.Route (MonadRoute'(liftRoute, unRoute))
 import Scaffolding.Pages.AppTemplate (MonadRender, template)
 import Scaffolding.Pages.Unauthorized (unauthorizedPage)
@@ -58,7 +58,7 @@ doAuth realm url =
        acidAuth <- askAcidAuth
        onAuthURL <- showURL (MkURL.profileURL P_PickProfile)
        showFn <- askRouteFn
-       liftRoute' . nestURL MkURL.authURL . unRoute $ (handleAuth acidAuth (urlTemplate' showFn) (facebook conf) realm onAuthURL url)
+       liftRoute' . nestURL MkURL.authURL . unRoute $ (handleAuth acidAuth (urlTemplate' showFn) realm onAuthURL url)
     where
       liftRoute' :: RouteT weburl v a -> m weburl a
       liftRoute' = liftRoute

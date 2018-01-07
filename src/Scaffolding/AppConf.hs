@@ -25,7 +25,6 @@ import HSP.Google.Analytics (UACCT)
 import System.Console.GetOpt (ArgDescr(..), ArgOrder(..), OptDescr(..), getOpt, usageInfo)
 import Text.ParserCombinators.Parsec (parse, many1)
 import Text.ParserCombinators.Parsec.Char (char, alphaNum, digit, spaces)
-import Facebook (Credentials(..))
 import Web.Routes.RouteT (URL)
 
 data LogMode
@@ -41,21 +40,19 @@ data AppConf
               , logs       :: FilePath
               , favicon    :: FilePath
               , logMode    :: LogMode
-              , facebook   :: Maybe Credentials
               , sshProxy   :: Bool
               , uacct      :: Maybe UACCT
               , addAdmin   :: [UserId]
               }
 
-defaultConf :: Maybe Credentials -> FilePath -> String -> AppConf
-defaultConf appFacebook favicon progName
+defaultConf :: FilePath -> String -> AppConf
+defaultConf favicon progName
     = AppConf { httpConf = nullConf -- { port = maybe 80 (read . drop 1 . uriPort) $ uriAuthority (connectURL facebookConfig)  }
               , baseURI  = pack (progName ++ ": missing --base-uri option")
               , top      = "_local"
               , static   = "."
               , logs     = "_local"
               , logMode  = Development
-              , facebook = appFacebook
               , favicon  = favicon
               , sshProxy = False
               , uacct    = Nothing
@@ -74,20 +71,9 @@ opts appName appUACCT =
        , Option [] ["logs"]             (ReqArg (\h -> \c -> c {logs = h}) "PATH") "The directory to store log files in"
        , Option [] ["log-mode"]         (ReqArg (\h -> \c -> c {logMode = read h}) (show ([minBound .. maxBound] :: [LogMode]))) "The logging mode to use"
        , Option [] ["enable-analytics"] (NoArg  (      \c -> c { uacct = appUACCT })) "Enable google analytics tracking."
-       , Option [] ["facebook-config"]  (ReqArg setFacebookConfig "app_id, app_secret") "Facebook app credentials"
        , Option [] ["add-admin"]        (ReqArg (\h -> \c -> c {addAdmin = UserId (read h) : addAdmin c}) "userId") "Make a user an Admin and then exit."
        , Option [] ["favicon"]          (ReqArg (\h -> \c -> c {favicon = h}) "PATH") "Specify where to find the favicon file relative to the static directory"
        ]
-           where
-             setFacebookConfig h =
-                 let p = do appId <- many1 digit
-                            _ <- char ','
-                            spaces
-                            appSecret <- many1 alphaNum
-                            return (Credentials (pack appName) (pack appId) (pack appSecret))
-                 in case parse p h h of
-                      (Left e) -> error $ "AppConf: " ++ show e
-                      (Right f) -> \c -> c { facebook = Just f }
 
 parseConfig :: [String] -> String -> Maybe UACCT -> Either [String] (AppConf -> AppConf)
 parseConfig args appName appUACCT
