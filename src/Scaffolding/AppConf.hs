@@ -86,12 +86,10 @@ parseConfig args appName appUACCT
 data MenuItem url = MenuItem String url
 data Menu url = Menu (MenuItem url)
 
-menuBar :: ( XMLGenerator m
-           , EmbedAsAttr m (Attr TL.Text a)
-           , StringType m ~ TL.Text
-           , XMLType m ~ XML
-           ) =>
-           [Menu a] -> GenXML m
+menuBar ::
+    forall m a. ( XMLGenerator m , EmbedAsAttr m (Attr TL.Text a) , StringType m ~ TL.Text , XMLType m ~ XML)
+    => [Menu a]
+    -> GenXML m
 menuBar [] = <div id="menubar"></div>
 menuBar menus =
     <div id="menubar">
@@ -100,6 +98,7 @@ menuBar menus =
       </ul>
     </div>
     where
+      mkMenu :: Menu a -> GenXML m
       mkMenu (Menu (MenuItem name loc)) = <li><a href=loc><% TL.pack name %></a></li>
 
 data Theme m
