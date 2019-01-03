@@ -8,6 +8,7 @@ module Scaffolding.Auth
        ) where
 
 import Control.Applicative  ((<$>))
+import Control.Monad.Fail (MonadFail)
 import Data.Acid (AcidState)
 import Data.Acid.Advanced (query')
 import Data.Text (Text)
@@ -82,6 +83,7 @@ doProfile :: forall m v weburl.
               MonadRoute (m weburl),
               MonadRoute' weburl v (m weburl),
               MonadRoute' ProfileURL v (m ProfileURL),
+              MonadFail (m ProfileURL),
               Monad v) =>
              AcidState AuthState
           -> AcidState ProfileState
