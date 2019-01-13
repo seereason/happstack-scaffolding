@@ -268,7 +268,7 @@ instance NextId (Widget HJScript') where
 -- | 'Widget' which returns the next unused Haskell Id
 nextId' :: Widget m Id
 nextId' =
-  do (v@(Id Haskell prefix (JInt i)), hjstate) <- get
+  do ~(v@(Id Haskell prefix (JInt i)), hjstate) <- get
      put (Id Haskell prefix (JInt (succ i)), hjstate)
      return v
 
